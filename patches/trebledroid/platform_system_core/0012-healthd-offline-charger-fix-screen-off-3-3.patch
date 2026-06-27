@@ -20,26 +20,26 @@ allow load sysfs_backlight_attr:file rw_file_perms;
  4 files changed, 108 insertions(+), 7 deletions(-)
 
 diff --git a/healthd/healthd_draw.cpp b/healthd/healthd_draw.cpp
-index 7c7931944..2266233e1 100644
+index c8db26b..43b18c2 100644
 --- a/healthd/healthd_draw.cpp
 +++ b/healthd/healthd_draw.cpp
 @@ -15,18 +15,28 @@
   */
-
+ 
  #include <android-base/stringprintf.h>
 +#include <android-base/file.h>
  #include <batteryservice/BatteryService.h>
  #include <cutils/klog.h>
 +#include <cutils/properties.h>
 +#include <unistd.h>
-
+ 
  #include "healthd_draw.h"
-
+ 
 +
  #if !defined(__ANDROID_VNDK__)
  #include "charger.sysprop.h"
  #endif
-
+ 
 -#define LOGE(x...) KLOG_ERROR("charger", x);
 -#define LOGW(x...) KLOG_WARNING("charger", x);
 -#define LOGV(x...) KLOG_DEBUG("charger", x);
@@ -52,7 +52,7 @@ index 7c7931944..2266233e1 100644
 +using ::android::base::ReadFileToString;
 +using ::android::base::WriteStringToFile;
 +
-
+ 
  static bool get_split_screen() {
  #if !defined(__ANDROID_VNDK__)
 @@ -73,10 +83,41 @@ HealthdDraw::HealthdDraw(animation* anim)
@@ -95,12 +95,12 @@ index 7c7931944..2266233e1 100644
 +        }
 +    }
  }
-
+ 
  HealthdDraw::~HealthdDraw() {}
-@@ -94,9 +135,42 @@ void HealthdDraw::redraw_screen(const animation* batt_anim, GRSurface* surf_unkn
+@@ -97,9 +138,42 @@ void HealthdDraw::redraw_screen(const animation* batt_anim, GRSurface* surf_unkn
      gr_flip();
  }
-
+ 
 +void HealthdDraw::set_brightness(uint32_t value) {
 +    LOGV("Kirin - Try to set brightness to %d\n",value)
 +    if (WriteStringToFile(std::to_string(value), "/sys/class/leds/lcd_backlight0/brightness")==false) {
@@ -139,49 +139,49 @@ index 7c7931944..2266233e1 100644
 +        gr_fb_blank(blank, drm);
 +    }
  }
-
+ 
  // support screen rotation for foldable phone
 diff --git a/healthd/healthd_draw.h b/healthd/healthd_draw.h
-index 016db8e07..e8e51748d 100644
+index 137d233..b133f2c 100644
 --- a/healthd/healthd_draw.h
 +++ b/healthd/healthd_draw.h
-@@ -84,9 +84,15 @@ class HealthdDraw {
-   // true if minui init'ed OK, false if minui init failed
-   bool graphics_available;
-
-+  // true if kirin found
-+  bool is_kirin;
-+  uint32_t mMaxBrightness;
+@@ -86,9 +86,15 @@ class HealthdDraw {
+     // true if minui init'ed OK, false if minui init failed
+     bool graphics_available;
+ 
++    // true if kirin found
++    bool is_kirin;
++    uint32_t mMaxBrightness;
 +
-  private:
-   // Configures font using given animation.
-   HealthdDraw(animation* anim);
-+  // Set brightness
-+  void set_brightness(uint32_t value);
+   private:
+     // Configures font using given animation.
+     HealthdDraw(animation* anim);
++    // Set brightness
++    void set_brightness(uint32_t value);
  };
-
+ 
  #endif  // HEALTHD_DRAW_H
 diff --git a/healthd/healthd_mode_charger.cpp b/healthd/healthd_mode_charger.cpp
-index 54b469be3..46f5e2725 100644
+index b8b77fb..a2c417e 100644
 --- a/healthd/healthd_mode_charger.cpp
 +++ b/healthd/healthd_mode_charger.cpp
 @@ -93,9 +93,9 @@ char* locale;
-
+ 
  #define LAST_KMSG_MAX_SZ (32 * 1024)
-
+ 
 -#define LOGE(x...) KLOG_ERROR("charger", x);
 -#define LOGW(x...) KLOG_WARNING("charger", x);
 -#define LOGV(x...) KLOG_DEBUG("charger", x);
 +#define LOGE(x...) KLOG_ERROR("charger", x); fprintf(stderr,x);
 +#define LOGW(x...) KLOG_WARNING("charger", x); fprintf(stderr,x);
 +#define LOGV(x...) KLOG_DEBUG("charger", x); fprintf(stderr,x);
-
+ 
  namespace android {
-
-@@ -301,6 +301,23 @@ void Charger::BlankSecScreen() {
+ 
+@@ -302,6 +302,23 @@ void Charger::BlankSecScreen() {
      }
  }
-
+ 
 +void Charger::UpdateLedState() {
 +
 +    if (!have_battery_state_) return;
@@ -201,8 +201,8 @@ index 54b469be3..46f5e2725 100644
 +
  void Charger::UpdateScreenState(int64_t now) {
      int disp_time;
-
-@@ -609,6 +626,9 @@ void Charger::OnHeartbeat() {
+ 
+@@ -611,6 +628,9 @@ void Charger::OnHeartbeat() {
       * screen transitions (animations, etc)
       */
      UpdateScreenState(now);
@@ -210,13 +210,13 @@ index 54b469be3..46f5e2725 100644
 +    // Update Led color
 +    UpdateLedState();
  }
-
+ 
  void Charger::OnHealthInfoChanged(const ChargerHealthInfo& health_info) {
 diff --git a/healthd/include_charger/charger/healthd_mode_charger.h b/healthd/include_charger/charger/healthd_mode_charger.h
-index c463b92aa..50267ffee 100644
+index 29c9f5f..463d5ca 100644
 --- a/healthd/include_charger/charger/healthd_mode_charger.h
 +++ b/healthd/include_charger/charger/healthd_mode_charger.h
-@@ -103,6 +103,7 @@ class Charger {
+@@ -104,6 +104,7 @@ class Charger {
      void ProcessHallSensor(int code);
      void HandleInputState(int64_t now);
      void HandlePowerSupplyState(int64_t now);
@@ -225,5 +225,5 @@ index c463b92aa..50267ffee 100644
      void InitHealthdDraw();
      void InitAnimation();
 -- 
-2.52.0
+2.54.0
 
