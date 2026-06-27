@@ -1,7 +1,7 @@
 From 38defae8544859fc0ef8596a117eef7781b0bdfc Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Sat, 25 Nov 2023 09:51:14 -0500
-Subject: [PATCH 22/28] Keep our own version of ro.logd.kernel. We do want
+Subject: [PATCH 18/23] Keep our own version of ro.logd.kernel. We do want
  logcat -b kernel, unlike what OEM set from their vendor
 
 ---
