@@ -4,41 +4,31 @@ Date: Mon, 30 Oct 2023 19:25:27 -0400
 Subject: [PATCH 41/55] Add a prop to use linear backlight control
 
 ---
- .../settings/brightness/BrightnessController.java    | 12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
+ .../main/domain/interactor/ScreenBrightnessInteractorImpl.kt  | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/packages/SystemUI/src/com/android/systemui/settings/brightness/BrightnessController.java b/packages/SystemUI/src/com/android/systemui/settings/brightness/BrightnessController.java
-index c65c3b854b82..8856a9c9e325 100644
---- a/packages/SystemUI/src/com/android/systemui/settings/brightness/BrightnessController.java
-+++ b/packages/SystemUI/src/com/android/systemui/settings/brightness/BrightnessController.java
-@@ -390,9 +390,15 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
-                 : MetricsEvent.ACTION_BRIGHTNESS;
-         minBacklight = mBrightnessMin;
-         maxBacklight = mBrightnessMax;
--        final float valFloat = MathUtils.min(
-+        float valFloat = MathUtils.min(
-                 convertGammaToLinearFloat(value, minBacklight, maxBacklight),
-                 maxBacklight);
-+        if (android.os.SystemProperties.getBoolean("persist.sys.phh.linear_brightness", false)) {
-+            android.util.Log.e("PHH", "Linear brightness val " + value + " from " + minBacklight + " to " + maxBacklight + " makes " + valFloat);
-+            valFloat = value / 65536.0f;
+diff --git a/packages/SystemUI/pods/brightness/src/main/domain/interactor/ScreenBrightnessInteractorImpl.kt b/packages/SystemUI/pods/brightness/src/main/domain/interactor/ScreenBrightnessInteractorImpl.kt
+index 100630466..118d6a1a3 100644
+--- a/packages/SystemUI/pods/brightness/src/main/domain/interactor/ScreenBrightnessInteractorImpl.kt
++++ b/packages/SystemUI/pods/brightness/src/main/domain/interactor/ScreenBrightnessInteractorImpl.kt
+@@ -16,6 +16,7 @@
+ 
+ package com.android.systemui.brightness.domain.interactor
+ 
++import android.os.SystemProperties
+ import com.android.settingslib.display.BrightnessUtils
+ import com.android.systemui.brightness.data.model.LinearBrightness
+ import com.android.systemui.brightness.data.repository.ScreenBrightnessRepository
+@@ -86,6 +87,9 @@ constructor(
+     }
+ 
+     private suspend fun GammaBrightness.toLinearBrightness(): LinearBrightness {
++        if (SystemProperties.getBoolean("persist.sys.phh.linear_brightness", false)) {
++            return LinearBrightness(value / 65536.0f)
 +        }
-+        final float finalValFloat = valFloat;
-+
-         if (stopTracking) {
-             // TODO(brightnessfloat): change to use float value instead.
-             MetricsLogger.action(mContext, metric,
-@@ -406,8 +412,8 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
-         if (!tracking) {
-             AsyncTask.execute(new Runnable() {
-                     public void run() {
--                        logBrightnessChange(mDisplayId, valFloat, false);
--                        mDisplayManager.setBrightness(mDisplayId, valFloat);
-+                        logBrightnessChange(mDisplayId, finalValFloat, false);
-+                        mDisplayManager.setBrightness(mDisplayId, finalValFloat);
-                     }
-                 });
-         }
+         val bounds = screenBrightnessRepository.getMinMaxLinearBrightness()
+         return LinearBrightness(
+             BrightnessUtils.convertGammaToLinearFloat(
 -- 
-2.52.0
+2.54.0
 
