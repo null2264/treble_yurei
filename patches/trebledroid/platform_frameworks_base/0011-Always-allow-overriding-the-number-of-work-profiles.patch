@@ -5,28 +5,31 @@ Subject: [PATCH 11/55] Always allow overriding the number of work profiles
 
 Change-Id: I6eb09aa71663c6fbe7563e3038bffcabdba0ff6a
 ---
- .../java/com/android/server/pm/UserManagerService.java    | 8 ++------
- 1 file changed, 2 insertions(+), 6 deletions(-)
+ services/core/java/com/android/server/pm/UserTypeDetails.java | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/services/core/java/com/android/server/pm/UserManagerService.java b/services/core/java/com/android/server/pm/UserManagerService.java
-index c72bf6bf8..0d71abd4c 100644
---- a/services/core/java/com/android/server/pm/UserManagerService.java
-+++ b/services/core/java/com/android/server/pm/UserManagerService.java
-@@ -9171,12 +9171,8 @@ public class UserManagerService extends IUserManager.Stub {
-             // UNLIMITED_NUMBER_OF_USERS serves as a shorthand for getMaxSupportedUsers().
-             defaultMax = UserManager.getMaxSupportedUsers();
-         }
--        if (!Build.IS_DEBUGGABLE) {
--            return defaultMax;
--        } else {
--            if (userTypeDetails.isManagedProfile()) {
--                return SystemProperties.getInt("persist.sys.max_profiles", defaultMax);
--            }
-+        if (userTypeDetails.isManagedProfile()) {
-+            return SystemProperties.getInt("persist.sys.max_profiles", defaultMax);
-         }
-         return defaultMax;
+diff --git a/services/core/java/com/android/server/pm/UserTypeDetails.java b/services/core/java/com/android/server/pm/UserTypeDetails.java
+index 0823f2bdc..2499fb199 100644
+--- a/services/core/java/com/android/server/pm/UserTypeDetails.java
++++ b/services/core/java/com/android/server/pm/UserTypeDetails.java
+@@ -27,6 +27,7 @@ import android.content.pm.UserInfo.UserInfoFlag;
+ import android.content.pm.UserProperties;
+ import android.content.res.Resources;
+ import android.os.Bundle;
++import android.os.SystemProperties;
+ import android.os.UserManager;
+ 
+ import com.android.internal.util.Preconditions;
+@@ -239,6 +240,9 @@ public final class UserTypeDetails {
+ 
+     /** Returns the maximum number of this user type allowed on the device. */
+     public int getMaxAllowed() {
++        if (isManagedProfile()) {
++            return SystemProperties.getInt("persist.sys.max_profiles", mMaxAllowed);
++        }
+         return mMaxAllowed;
      }
+ 
 -- 
-2.52.0
+2.54.0
 
