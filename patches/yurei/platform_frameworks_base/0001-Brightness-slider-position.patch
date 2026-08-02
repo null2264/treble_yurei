@@ -1,7 +1,7 @@
 From 2517e1218d68a82e2eebe0984827f0b4dc6cd14e Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 2 Aug 2026 12:17:19 +0700
-Subject: [PATCH] style: Move brightness slider to the bottom
+Subject: [PATCH 1/3] style: Move brightness slider to the bottom
 
 ---
  .../qs/composefragment/QSFragmentCompose.kt   | 80 +++++++++++--------
@@ -47,7 +47,7 @@ index b32d7ad9654f1..0d6514dbfaf26 100644
 +            AlwaysDarkMode {
 +                BrightnessSliderContainer(
 +                    viewModel =
-+                        viewModel.containerViewModel.brightnessSliderViewModel,
++                        containerViewModel.brightnessSliderViewModel,
 +                    containerColors =
 +                        ContainerColors(
 +                            Color.Transparent,
@@ -167,4 +167,110 @@ index b32d7ad9654f1..0d6514dbfaf26 100644
          }
      }
  }
+
+From 30a4c0a79d541b2352e5bf998eba439308da5707 Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Sun, 2 Aug 2026 18:16:31 +0700
+Subject: [PATCH 2/3] fix: containerViewModel -> viewModel.containerViewModel
+
+---
+ .../android/systemui/qs/composefragment/QSFragmentCompose.kt    | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt b/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt
+index 0d6514dbfaf26..b609d66bfa43d 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt
++++ b/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt
+@@ -724,7 +724,7 @@ constructor(
+             AlwaysDarkMode {
+                 BrightnessSliderContainer(
+                     viewModel =
+-                        containerViewModel.brightnessSliderViewModel,
++                        viewModel.containerViewModel.brightnessSliderViewModel,
+                     containerColors =
+                         ContainerColors(
+                             Color.Transparent,
+
+From ca63a11c46bbdb1d054eb10ac9cf0377dc675ac8 Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Sun, 2 Aug 2026 22:11:11 +0700
+Subject: [PATCH 3/3] fix: Add missing transition
+
+---
+ .../qs/composefragment/QSFragmentCompose.kt       | 15 ++++++++++++---
+ .../ui/FromQuickQuickSettingsToQuickSettings.kt   |  1 +
+ .../systemui/qs/shared/ui/QuickSettings.kt        |  1 +
+ 3 files changed, 14 insertions(+), 3 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt b/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt
+index b609d66bfa43d..d400711c700dd 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt
++++ b/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt
+@@ -777,6 +777,11 @@ constructor(
+                         }
+                         .padding(top = { qqsPadding }, bottom = { bottomPadding })
+             ) {
++                val BrightnessSlider: @Composable () -> Unit = {
++                    Element(Elements.BrightnessSlider, modifier = modifier) {
++                        BrightnessSlider(viewModel, layoutState)
++                    }
++                }
+                 val Tiles =
+                     @Composable {
+                         // When always compose is false, this will always be true, and we'll be
+@@ -832,7 +837,7 @@ constructor(
+                                 .padding(horizontal = qsHorizontalMargin())
+                     ) {
+                         QuickQuickSettingsLayout(
+-                            brightness = { BrightnessSlider(viewModel, layoutState) },
++                            brightness = BrightnessSlider,
+                             tiles = Tiles,
+                             media = Media,
+                             mediaInRow = viewModel.qqsMediaInRow,
+@@ -897,7 +902,11 @@ constructor(
+                         Spacer(
+                             modifier = Modifier.height { qqsPadding + qsExtraPadding.roundToPx() }
+                         )
+-
++                        val BrightnessSlider: @Composable () -> Unit = {
++                            Element(Elements.BrightnessSlider, modifier = modifier) {
++                                BrightnessSlider(viewModel, layoutState)
++                            }
++                        }
+                         val TileGrid =
+                             @Composable {
+                                 Box {
+@@ -954,7 +963,7 @@ constructor(
+                             QuickSettingsLayout(
+                                 brightness =
+                                     if (viewModel.isBrightnessSliderVisible) {
+-                                        { BrightnessSlider(viewModel, layoutState) }
++                                        { BrightnessSlider() }
+                                     } else {
+                                         {}
+                                     },
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/composefragment/ui/FromQuickQuickSettingsToQuickSettings.kt b/packages/SystemUI/src/com/android/systemui/qs/composefragment/ui/FromQuickQuickSettingsToQuickSettings.kt
+index 64cd529b7247c..ba7aa0e8a99af 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/composefragment/ui/FromQuickQuickSettingsToQuickSettings.kt
++++ b/packages/SystemUI/src/com/android/systemui/qs/composefragment/ui/FromQuickQuickSettingsToQuickSettings.kt
+@@ -31,6 +31,7 @@ fun TransitionBuilder.quickQuickSettingsToQuickSettings(
+     anchoredTranslate(Elements.QuickSettingsContent, Elements.GridAnchor)
+ 
+     sharedElement(Elements.TileElementMatcher, enabled = animateTilesExpansion())
++    sharedElement(Elements.BrightnessSlider)
+ 
+     // This will animate between 0f (QQS) and 0.5, fading in the QQS tiles when coming back
+     // from non first page QS. The QS content ends fading out at 0.43f, so there's a brief
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/shared/ui/QuickSettings.kt b/packages/SystemUI/src/com/android/systemui/qs/shared/ui/QuickSettings.kt
+index ca3626594f4bb..8ebf07a11fe62 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/shared/ui/QuickSettings.kt
++++ b/packages/SystemUI/src/com/android/systemui/qs/shared/ui/QuickSettings.kt
+@@ -33,6 +33,7 @@ object QuickSettings {
+ 
+         val QuickQuickSettingsAndMedia = ElementKey("QuickQuickSettingsAndMedia")
+         val SplitShadeQuickSettings = ElementKey("SplitShadeQuickSettings")
++        val BrightnessSlider = ElementKey("BrightnessSlider")
+     }
+ 
+     object SharedValues {
 
