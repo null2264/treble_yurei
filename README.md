@@ -1,6 +1,7 @@
-# RestlessOS
+# Yūrei
 
-RestlessOS is an **unofficial**, **unaffiliated** fork of
+Yūrei (wordplay of RestlessOS' name, a restless spirit) is my personal build of
+RestlessOS which is an **unofficial**, **unaffiliated** fork of
 [GrapheneOS](https://grapheneos.org) packaged as a Generic System Image (GSI)
 for Project Treble devices. It is not endorsed by, sponsored by, or in any way
 connected to the GrapheneOS project or its developers.
