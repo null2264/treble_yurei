@@ -47,7 +47,7 @@ index b32d7ad9654f1..0d6514dbfaf26 100644
 +            AlwaysDarkMode {
 +                BrightnessSliderContainer(
 +                    viewModel =
-+                        containerViewModel.brightnessSliderViewModel,
++                        viewModel.containerViewModel.brightnessSliderViewModel,
 +                    containerColors =
 +                        ContainerColors(
 +                            Color.Transparent,
