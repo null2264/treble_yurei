@@ -16,7 +16,7 @@ cp -v $WD/configs/manifests/*.xml .repo/local_manifests/
 
 .repo/repo/repo sync --force-sync --jobs=4 --no-clone-bundle --no-tags
 
-for tier in trebledroid trebledroid-staging rom personal yuurei; do
+for tier in trebledroid trebledroid-staging rom personal yurei; do
     $WD/patches/apply.sh . "${tier}"
 done
 
