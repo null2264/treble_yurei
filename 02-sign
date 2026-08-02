@@ -1,0 +1,30 @@
+#!/usr/bin/bash
+
+# TODO: Do signing
+
+WD=$PWD
+
+cd build/src
+. build/envsetup.sh
+
+DEBUG="true"
+
+V="user"; [ "$DEBUG" = "true" ] && V="userdebug"
+
+GRAPHENEOS_TAG="2026061600"
+AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
+ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
+ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed 's/.*"\([^"]*\)".*/\1/')
+
+bash vendor/null-priv/keys/sign.sh
+
+rm -fv "${OUT}/system.img"
+unzip -j -q "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
+rm -fv "${OUT}/signed-target_files.zip"
+mv -v "${OUT}/system.img" "$WD/system.img"
+
+TAG="${ANDROID_VERSION}-gos${GRAPHENEOS_TAG}"
+img="RestlessOS-arm64-ab-${TAG}.img"
+cd $WD
+mv -v system.img "${img}"
+xz --best --compress --memlimit-compress=0 --threads=0 -v "${img}"

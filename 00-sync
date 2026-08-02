@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/bash
 
 WD=$PWD
 TAG=$(curl -fsS "https://grapheneos.org/releases" \
