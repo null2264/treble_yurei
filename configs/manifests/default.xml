@@ -31,7 +31,8 @@
   <project path="vendor/apn" name="android_vendor_apn" remote="lineage" revision="main" clone-depth="1" />
 
   <!-- vendor-priv -->
-  <project path="vendor/cawilliamson-priv" name="vendor_cawilliamson-priv" remote="cawilliamson-priv" revision="main" clone-depth="1" />
+  <!-- FIXME: Replace with my own -->
+  <!-- <project path="vendor/cawilliamson-priv" name="vendor_cawilliamson-priv" remote="cawilliamson-priv" revision="main" clone-depth="1" /> -->
 
   <!-- trebledroid: hardware overlay -->
   <project path="vendor/hardware_overlay" name="vendor_hardware_overlay" remote="trebledroid" revision="pie" clone-depth="1" />
