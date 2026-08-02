@@ -1,7 +1,5 @@
 #!/usr/bin/bash
 
-# TODO: Do signing
-
 WD=$PWD
 
 cd build/src
@@ -16,10 +14,10 @@ AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//
 ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
 ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed 's/.*"\([^"]*\)".*/\1/')
 
-bash vendor/null-priv/keys/sign.sh
-
+OUT=$WD/out
+mkdir -p $WD/out
 rm -fv "${OUT}/system.img"
-unzip -j -q "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
+unzip -j -q "out/target/product/tdgsi_arm64_ab/obj/PACKAGING/target_files_intermediates/treble_arm64_bvN-target_files.zip" IMAGES/system.img -d "${OUT}/"
 rm -fv "${OUT}/signed-target_files.zip"
 mv -v "${OUT}/system.img" "$WD/system.img"
 
