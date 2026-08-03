@@ -1,0 +1,295 @@
+From a762343a8177ba4b9460f62f9df6e31d3793c2ee Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Tue, 4 Aug 2026 00:16:35 +0700
+Subject: [PATCH] SystemUI: Add double tap to sleep gesture
+
+Allow double tapping the status bar or empty keyguard space to turn off
+the screen. Ignores gesture when the primary bouncer (PIN/Pattern entry)
+is showing or while dozing.
+
+Co-authored-by: Rashed Abdel-Tawab <rashed@linux.com>
+Co-authored-by: Adnan Begovic <adnan@cyngn.com>
+Co-authored-by: Altaf-Mahdi <altaf.mahdi@gmail.com>
+Co-authored-by: Arian <arian.kulmer@web.de>
+Co-authored-by: Bruno Martins <bgcngm@gmail.com>
+Co-authored-by: Dhina17 <dhinalogu@gmail.com>
+Co-authored-by: dianlujitao <dianlujitao@lineageos.org>
+Co-authored-by: Michael W <baddaemon87@gmail.com>
+Co-authored-by: pppig236 <priv@pppig236.com>
+Co-authored-by: Roman Birg <roman@cyngn.com>
+Co-authored-by: Zhao Wei Liew <zhaoweiliew@gmail.com>
+Co-authored-by: Pranav Vashi <neobuddy89@gmail.com>
+Change-Id: I7489204e348906dcf6e34fa04f2121974c22ddb9
+---
+ ...tificationPanelViewControllerBaseTest.java |  5 ++-
+ .../shade/NotificationShadeWindowViewTest.kt  |  2 +
+ .../NotificationPanelViewController.java      | 26 +++++++++++-
+ ...NotificationShadeWindowViewController.java | 14 ++++++-
+ .../systemui/shade/QQSGestureListener.kt      | 41 +++++++++++++++++++
+ ...tificationShadeWindowViewControllerTest.kt |  2 +
+ 6 files changed, 85 insertions(+), 5 deletions(-)
+ create mode 100644 packages/SystemUI/src/com/android/systemui/shade/QQSGestureListener.kt
+
+diff --git a/packages/SystemUI/multivalentTests/src/com/android/systemui/shade/NotificationPanelViewControllerBaseTest.java b/packages/SystemUI/multivalentTests/src/com/android/systemui/shade/NotificationPanelViewControllerBaseTest.java
+index 447b4f462a954..873f680b347a0 100644
+--- a/packages/SystemUI/multivalentTests/src/com/android/systemui/shade/NotificationPanelViewControllerBaseTest.java
++++ b/packages/SystemUI/multivalentTests/src/com/android/systemui/shade/NotificationPanelViewControllerBaseTest.java
+@@ -524,7 +524,7 @@ mFalsingManager, new FalsingCollectorFake(),
+                 mStatusBarStateController,
+                 mNotificationShadeWindowController,
+                 mDozeLog, mDozeParameters, mCommandQueue, mVibratorHelper,
+-                mLatencyTracker, mAccessibilityManager, 0, mUpdateMonitor,
++                mLatencyTracker, mPowerManager, mAccessibilityManager, 0, mUpdateMonitor,
+                 mMetricsLogger,
+                 mShadeLog,
+                 mConfigurationController,
+@@ -580,7 +580,8 @@ mFalsingManager, new FalsingCollectorFake(),
+                 mBrightnessMirrorShowingRepository,
+                 new BlurConfig(0f, 0f),
+                 () -> mKosmos.getFakeShadeDisplaysRepository(),
+-                mWindowRootViewBlurInteractor);
++                mWindowRootViewBlurInteractor,
++                mContext);
+         mNotificationPanelViewController.initDependencies(
+                 mCentralSurfaces,
+                 null,
+diff --git a/packages/SystemUI/multivalentTests/src/com/android/systemui/shade/NotificationShadeWindowViewTest.kt b/packages/SystemUI/multivalentTests/src/com/android/systemui/shade/NotificationShadeWindowViewTest.kt
+index 102788e3db482..4501142b3d969 100644
+--- a/packages/SystemUI/multivalentTests/src/com/android/systemui/shade/NotificationShadeWindowViewTest.kt
++++ b/packages/SystemUI/multivalentTests/src/com/android/systemui/shade/NotificationShadeWindowViewTest.kt
+@@ -151,6 +151,7 @@ class NotificationShadeWindowViewTest : SysuiTestCase() {
+     @Mock lateinit var primaryBouncerInteractor: PrimaryBouncerInteractor
+     @Mock lateinit var alternateBouncerInteractor: AlternateBouncerInteractor
+     @Mock lateinit var configurationForwarder: ConfigurationForwarder
++    @Mock private lateinit var qqsGestureListener: QQSGestureListener
+     @Captor
+     private lateinit var interactionEventHandlerCaptor: ArgumentCaptor<InteractionEventHandler>
+ 
+@@ -241,6 +242,7 @@ class NotificationShadeWindowViewTest : SysuiTestCase() {
+                 kosmos.shadeStatusBarComponentsInteractor,
+                 kosmos.dozeTouchInteractor,
+                 kosmos.javaAdapter,
++                qqsGestureListener,
+             )
+ 
+         controller.setupExpandedStatusBar()
+diff --git a/packages/SystemUI/src/com/android/systemui/shade/NotificationPanelViewController.java b/packages/SystemUI/src/com/android/systemui/shade/NotificationPanelViewController.java
+index 9689f0c04a86b..3bdbd252376fc 100644
+--- a/packages/SystemUI/src/com/android/systemui/shade/NotificationPanelViewController.java
++++ b/packages/SystemUI/src/com/android/systemui/shade/NotificationPanelViewController.java
+@@ -52,6 +52,7 @@
+ import android.animation.ValueAnimator;
+ import android.annotation.NonNull;
+ import android.annotation.Nullable;
++import android.content.Context;
+ import android.content.res.Configuration;
+ import android.content.res.Resources;
+ import android.graphics.Color;
+@@ -62,11 +63,13 @@
+ import android.graphics.Shader;
+ import android.os.Build;
+ import android.os.Bundle;
++import android.os.PowerManager;
+ import android.os.Trace;
+ import android.util.IndentingPrintWriter;
+ import android.util.Log;
+ import android.util.MathUtils;
+ import android.view.Display;
++import android.view.GestureDetector;
+ import android.view.HapticFeedbackConstants;
+ import android.view.InputDevice;
+ import android.view.MotionEvent;
+@@ -295,6 +298,7 @@ public final class NotificationPanelViewController implements
+     private final ConfigurationController mConfigurationController;
+     private final Provider<FlingAnimationUtils.Builder> mFlingAnimationUtilsBuilder;
+     private final NotificationStackScrollLayoutController mNotificationStackScrollLayoutController;
++    private final PowerManager mPowerManager;
+     private final AccessibilityManager mAccessibilityManager;
+     private final NotificationWakeUpCoordinator mWakeUpCoordinator;
+     private final PulseExpansionHandler mPulseExpansionHandler;
+@@ -321,6 +325,8 @@ public final class NotificationPanelViewController implements
+     private final boolean mNotificationsDragEnabled;
+     private final NotificationShadeWindowController mNotificationShadeWindowController;
+     private final ShadeExpansionStateManager mShadeExpansionStateManager;
++    private GestureDetector mDoubleTapGesture;
++
+     private final ShadeRepository mShadeRepository;
+     private final ShadeAnimationInteractor mShadeAnimationInteractor;
+     private final FalsingTapListener mFalsingTapListener = this::falsingAdditionalTapRequired;
+@@ -589,6 +595,7 @@ public NotificationPanelViewController(NotificationPanelView view,
+             CommandQueue commandQueue,
+             VibratorHelper vibratorHelper,
+             LatencyTracker latencyTracker,
++            PowerManager powerManager,
+             AccessibilityManager accessibilityManager,
+             @DisplayId int displayId,
+             KeyguardUpdateMonitor keyguardUpdateMonitor,
+@@ -649,7 +656,8 @@ public NotificationPanelViewController(NotificationPanelView view,
+             BrightnessMirrorShowingRepository brightnessMirrorShowingRepository,
+             BlurConfig blurConfig,
+             Lazy<ShadeDisplaysRepository> shadeDisplaysRepository,
+-            WindowRootViewBlurInteractor windowRootViewBlurInteractor) {
++            WindowRootViewBlurInteractor windowRootViewBlurInteractor,
++            Context context) {
+         mBlurConfig = blurConfig;
+         mWindowRootViewBlurInteractor = windowRootViewBlurInteractor;
+         SceneContainerFlag.assertInLegacyMode();
+@@ -744,6 +752,7 @@ public void onViewDetachedFromWindow(View v) {}
+         mShadeHeaderController = shadeHeaderController;
+         mAnimateBack = predictiveBackAnimateShade();
+         mFalsingCollector = falsingCollector;
++        mPowerManager = powerManager;
+         mWakeUpCoordinator = coordinator;
+         mMainDispatcher = mainDispatcher;
+         mAccessibilityManager = accessibilityManager;
+@@ -769,6 +778,16 @@ public void onViewDetachedFromWindow(View v) {}
+         quickSettingsController.setFlingQsWithoutClickListener(this::onFlingQsWithoutClick);
+         quickSettingsController.setExpansionHeightSetToMaxListener(this::onExpansionHeightSetToMax);
+         shadeExpansionStateManager.addStateListener(this::onPanelStateChanged);
++        mDoubleTapGesture = new GestureDetector(context,
++                new GestureDetector.SimpleOnGestureListener() {
++            @Override
++            public boolean onDoubleTap(MotionEvent e) {
++                if (mPowerManager != null) {
++                    mPowerManager.goToSleep(e.getEventTime());
++                }
++                return true;
++            }
++        });
+         mConversationNotificationManager = conversationNotificationManager;
+         mScreenOffAnimationController = screenOffAnimationController;
+         mUnlockedScreenOffAnimationController = unlockedScreenOffAnimationController;
+@@ -4017,6 +4036,11 @@ public boolean onTouchEvent(MotionEvent event) {
+                 return false;
+             }
+ 
++            // Just execute the gesture directly without checking mDoubleTapToSleepEnabled
++            if (!mPulsing && !mDozing) {
++                mDoubleTapGesture.onTouchEvent(event);
++            }
++
+             // Make sure the next touch won't the blocked after the current ends.
+             if (event.getAction() == MotionEvent.ACTION_UP
+                     || event.getAction() == MotionEvent.ACTION_CANCEL) {
+diff --git a/packages/SystemUI/src/com/android/systemui/shade/NotificationShadeWindowViewController.java b/packages/SystemUI/src/com/android/systemui/shade/NotificationShadeWindowViewController.java
+index 3df49c47c33c4..64f51024748c4 100644
+--- a/packages/SystemUI/src/com/android/systemui/shade/NotificationShadeWindowViewController.java
++++ b/packages/SystemUI/src/com/android/systemui/shade/NotificationShadeWindowViewController.java
+@@ -187,6 +187,9 @@ public class NotificationShadeWindowViewController implements Dumpable {
+             };
+     private final SystemClock mClock;
+ 
++    private GestureDetector mQQSGestureHandler;
++    private final QQSGestureListener mQQSGestureListener;
++
+     @Inject
+     public NotificationShadeWindowViewController(
+             BlurUtils blurUtils,
+@@ -231,7 +234,8 @@ public NotificationShadeWindowViewController(
+             @Main CoroutineDispatcher mainDispatcher,
+             ShadeStatusBarComponentsInteractor shadeStatusBarComponentsInteractor,
+             DozeTouchInteractor dozeTouchInteractor,
+-            JavaAdapter javaAdapter) {
++            JavaAdapter javaAdapter,
++            QQSGestureListener qqsGestureListener) {
+         mLockscreenShadeTransitionController = transitionController;
+         mFalsingCollector = falsingCollector;
+         mStatusBarStateController = statusBarStateController;
+@@ -260,6 +264,7 @@ public NotificationShadeWindowViewController(
+         mQuickSettingsController = quickSettingsController;
+         mMainDispatcher = mainDispatcher;
+         mShadeStatusBarComponentsInteractor = shadeStatusBarComponentsInteractor;
++        mQQSGestureListener = qqsGestureListener;
+ 
+         // This view is not part of the newly inflated expanded status bar.
+         mBrightnessMirror = mView.findViewById(R.id.brightness_mirror_container);
+@@ -399,6 +404,8 @@ public void setupExpandedStatusBar() {
+         mStackScrollLayout = mView.findViewById(R.id.notification_stack_scroller);
+         mPulsingWakeupGestureHandler = new GestureDetector(mView.getContext(),
+                 mPulsingGestureListener);
++        mQQSGestureHandler = new GestureDetector(mView.getContext(),
++                mQQSGestureListener);
+         mView.setLayoutInsetsController(mNotificationInsetsController);
+         mView.setWindowRootViewKeyEventHandler(mWindowRootViewKeyEventHandler);
+         mView.setInteractionEventHandler(new NotificationShadeWindowView.InteractionEventHandler() {
+@@ -461,7 +468,10 @@ public Boolean handleDispatchTouchEvent(MotionEvent ev) {
+                 }
+ 
+                 mFalsingCollector.onTouchEvent(ev);
+-                if (!SceneContainerFlag.isEnabled()) {
++                mQQSGestureHandler.onTouchEvent(ev);
++                // Pass touch events to the pulsing gesture listener only if it's dozing,
++                // otherwise lockscreen DT2S and AOD DT2W will conflict.
++                if (!SceneContainerFlag.isEnabled() && mStatusBarStateController.isDozing()) {
+                     mPulsingWakeupGestureHandler.onTouchEvent(ev);
+                 }
+ 
+diff --git a/packages/SystemUI/src/com/android/systemui/shade/QQSGestureListener.kt b/packages/SystemUI/src/com/android/systemui/shade/QQSGestureListener.kt
+new file mode 100644
+index 0000000000000..80fc25572cf94
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/shade/QQSGestureListener.kt
+@@ -0,0 +1,41 @@
++package com.android.systemui.shade
++
++import android.content.Context
++import android.os.PowerManager
++import android.view.GestureDetector
++import android.view.MotionEvent
++import com.android.systemui.dagger.SysUISingleton
++import com.android.systemui.plugins.FalsingManager
++import com.android.systemui.plugins.statusbar.StatusBarStateController
++import com.android.systemui.statusbar.StatusBarState
++import com.android.systemui.statusbar.phone.CentralSurfaces
++import javax.inject.Inject
++
++@SysUISingleton
++class QQSGestureListener @Inject constructor(
++        private val context: Context,
++        private val falsingManager: FalsingManager,
++        private val powerManager: PowerManager,
++        private val statusBarStateController: StatusBarStateController,
++        private val centralSurfaces: CentralSurfaces,
++) : GestureDetector.SimpleOn[27;1:3uGestureListener() {
++
++    private val quickQsOffsetHeight: Int = context.resources.getDimensionPixelSize(
++            com.android.internal.R.dimen.quick_qs_offset_height)
++
++    override fun onDoubleTapEvent(e: MotionEvent): Boolean {
++        val isKeyguard = statusBarStateController.state == StatusBarState.KEYGUARD
++        val isBouncer = centralSurfaces.isBouncerShowing
++
++        if (
++            e.actionMasked == MotionEvent.ACTION_UP &&
++            !statusBarStateController.isDozing &&
++            (e.y < quickQsOffsetHeight || (isKeyguard && !isBouncer)) &&
++            !falsingManager.isFalseDoubleTap
++        ) {
++            powerManager.goToSleep(e.eventTime)
++            return true
++        }
++        return false
++    }
++}
+\ No newline at end of file
+diff --git a/packages/SystemUI/tests/src/com/android/systemui/shade/NotificationShadeWindowViewControllerTest.kt b/packages/SystemUI/tests/src/com/android/systemui/shade/NotificationShadeWindowViewControllerTest.kt
+index 178c6cd334eac..c7ca30f830482 100644
+--- a/packages/SystemUI/tests/src/com/android/systemui/shade/NotificationShadeWindowViewControllerTest.kt
++++ b/packages/SystemUI/tests/src/com/android/systemui/shade/NotificationShadeWindowViewControllerTest.kt
+@@ -181,6 +181,7 @@ class NotificationShadeWindowViewControllerTest(flags: FlagsParameterization) :
+     private val notificationLaunchAnimationRepository = NotificationLaunchAnimationRepository()
+     private val notificationLaunchAnimationInteractor =
+         NotificationLaunchAnimationInteractor(notificationLaunchAnimationRepository)
++    @Mock private lateinit var qqsGestureListener: QQSGestureListener
+ 
+     private val brightnessMirrorShowingRepository = BrightnessMirrorShowingRepository()
+     private val brightnessMirrorShowingInteractor =
+@@ -277,6 +278,7 @@ class NotificationShadeWindowViewControllerTest(flags: FlagsParameterization) :
+                 kosmos.shadeStatusBarComponentsInteractor,
+                 kosmos.dozeTouchInteractor,
+                 kosmos.javaAdapter,
++                qqsGestureListener,
+             )
+         underTest.setupExpandedStatusBar()
+         underTest.setDragDownHelper(dragDownHelper)
+
