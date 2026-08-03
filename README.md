@@ -6,7 +6,21 @@ RestlessOS which is an **unofficial**, **unaffiliated** fork of
 for Project Treble devices. It is not endorsed by, sponsored by, or in any way
 connected to the GrapheneOS project or its developers.
 
-For discussion and support, join the Telegram group: https://t.me/restlessos
+> [!CAUTION]
+> Yūrei is as stated above, my personal build of RestlessOS for my Samsung A05s, there won't be any support for this AT ALL.
+
+## Changes from RestlessOS
+
+### Implemented
+- Show brightness slider on QuickQuickSettings
+- Move brightness slider to the bottom of QuickSettings (right above media control)
+
+### Planned
+- Double tap to sleep
+- Triple finger swipe to screenshot
+- Long left edge gesture to open volume panel
+- Battery charge limiter with configurable node through overlay
+  Samsung's node: ` /sys/class/power_supply/battery/batt_slate_mode`
 
 ## Changes from GrapheneOS
 
