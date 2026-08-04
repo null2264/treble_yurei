@@ -6,7 +6,7 @@ TAG=$(curl -fsS "https://grapheneos.org/releases" \
     | sort -nr | head -1)
 [ -z "$TAG" ] && { echo "ERROR: failed to resolve tag"; exit 1; }
 
-. $PWD/common.sh
+. $WD/common.sh
 
 mkdir -p build/src
 cd build/src

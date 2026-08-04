@@ -266,7 +266,7 @@ index b628a68b7fcae..912f3ec00424b 100644
          setArrowStrokeAlpha(gestureProgress)
          setVerticalTranslation(yOffset)
      }
-@@ -644,6 +656,26 @@ constructor(
+@@ -644,6 +644,29 @@ constructor(
          windowManager.addView(mView, layoutParams)
      }
  

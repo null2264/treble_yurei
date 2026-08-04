@@ -13,7 +13,7 @@ cd device/phh/treble
 cd $prevWD
 
 . build/envsetup.sh
-. $PWD/common.sh
+. $WD/common.sh
 
 V="user"; [ "$DEBUG" = "true" ] && V="userdebug"
 

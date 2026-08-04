@@ -4,7 +4,7 @@ WD=$PWD
 
 cd build/src
 . build/envsetup.sh
-. $PWD/common.sh
+. $WD/common.sh
 
 V="user"; [ "$DEBUG" = "true" ] && V="userdebug"
 
