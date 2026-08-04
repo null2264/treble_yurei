@@ -250,7 +250,7 @@ index 0000000000000..80fc25572cf94
 +        private val powerManager: PowerManager,
 +        private val statusBarStateController: StatusBarStateController,
 +        private val centralSurfaces: CentralSurfaces,
-+) : GestureDetector.SimpleOn[27;1:3uGestureListener() {
++) : GestureDetector.SimpleOnGestureListener() {
 +
 +    private val quickQsOffsetHeight: Int = context.resources.getDimensionPixelSize(
 +            com.android.internal.R.dimen.quick_qs_offset_height)
