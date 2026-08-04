@@ -1,0 +1,467 @@
+From 0d84febce54bc0b2c23d913fef55ebbf3fbbd572 Mon Sep 17 00:00:00 2001
+From: someone5678 <nemui3353@gmail.com>
+Date: Fri, 14 Jul 2023 17:26:19 +0900
+Subject: [PATCH] Implement edge long swipe gesture to open volume panel
+
+Co-authored-by: LuK1337 <priv.luk@gmail.com>
+Co-authored-by: Nico <nicorg2529@gmail.com>
+Co-authored-by: OnlyTomInSecond <q2781273965@gmail.com>
+Change-Id: I6a54d781b64aeec278b9f1be4a42bcfaf681b160
+---
+ core/java/android/view/KeyEvent.java          |  6 +++++
+ .../android/wm/shell/back/BackAnimation.java  |  5 +++
+ .../shell/back/BackAnimationController.java   | 41 +++++++++++++++++++
+ .../plugins/NavigationEdgeBackPlugin.java     | 12 +++++-
+ .../navigationbar/gestural/BackPanel.kt       |  8 ++++
+ .../gestural/BackPanelController.kt           | 38 +++++++++++++++++-
+ .../gestural/EdgeBackGestureHandler.java      | 26 ++++++++++--
+ .../gestural/BackPanelControllerTest.kt       |  2 +-
+ .../server/policy/PhoneWindowManager.java     | 22 ++++++++++
+ 9 files changed, 153 insertions(+), 7 deletions(-)
+
+diff --git a/core/java/android/view/KeyEvent.java b/core/java/android/view/KeyEvent.java
+index f426e9373ed96..34a94baacccd6 100644
+--- a/core/java/android/view/KeyEvent.java
++++ b/core/java/android/view/KeyEvent.java
+@@ -2151,6 +2151,12 @@ public class KeyEvent extends InputEvent implements Parcelable {
+      */
+     public static final int FLAG_FALLBACK = 0x400;
+ 
++    /**
++     * Flag that indicates that event was sent from EdgeBackGestureHandler.
++     * @hide
++     */
++    public static final int FLAG_LONG_SWIPE = 0x800;
++
+     /**
+      * This flag indicates that this event was modified by or generated from an accessibility
+      * service. Value = 0x800
+diff --git a/libs/WindowManager/Shell/src/com/android/wm/shell/back/BackAnimation.java b/libs/WindowManager/Shell/src/com/android/wm/shell/back/BackAnimation.java
+index c01ad1d32376a..43ad1e3a427db 100644
+--- a/libs/WindowManager/Shell/src/com/android/wm/shell/back/BackAnimation.java
++++ b/libs/WindowManager/Shell/src/com/android/wm/shell/back/BackAnimation.java
+@@ -55,6 +55,11 @@ void onBackMotion(
+      */
+     void setTriggerBack(boolean triggerBack);
+ 
++    /**
++     * Sets whether the back long swipe gesture is past the trigger threshold or not.
++     */
++    void setTriggerLongSwipe(boolean triggerLongSwipe);
++
+     /**
+      * Sets the threshold values that define edge swipe behavior.<br>
+      * <br>
+diff --git a/libs/WindowManager/Shell/src/com/android/wm/shell/back/BackAnimationController.java b/libs/WindowManager/Shell/src/com/android/wm/shell/back/BackAnimationController.java
+index 532bec2f87cf9..14d4cd182625b 100644
+--- a/libs/WindowManager/Shell/src/com/android/wm/shell/back/BackAnimationController.java
++++ b/libs/WindowManager/Shell/src/com/android/wm/shell/back/BackAnimationController.java
+@@ -135,6 +135,9 @@ public class BackAnimationController implements RemoteCallable<BackAnimationCont
+     /** Registry for the back animations */
+     private final ShellBackAnimationRegistry mShellBackAnimationRegistry;
+ 
++    /** @see #setTriggerLongSwipe(boolean) */
++    private boolean mTriggerLongSwipe;
++
+     @Nullable
+     private BackNavigationInfo mBackNavigationInfo;
+     private boolean mReceivedNullNavigationInfo = false;
+@@ -362,6 +365,12 @@ public void setTriggerBack(boolean triggerBack) {
+             mShellExecutor.execute(() -> BackAnimationController.this.setTriggerBack(triggerBack));
+         }
+ 
++        @Override
++        public void setTriggerLongSwipe(boolean triggerLongSwipe) {
++            mShellExecutor.execute(
++                    () -> BackAnimationController.this.setTriggerLongSwipe(triggerLongSwipe));
++        }
++
+         @Override
+         public void setSwipeThresholds(
+                 float linearDistance,
+@@ -842,6 +851,17 @@ public void setTriggerBack(boolean triggerBack) {
+         }
+     }
+ 
++    /**
++     * Sets to true when the back long swipe gesture has passed the triggering threshold,
++     * false otherwise.
++     */
++    public void setTriggerLongSwipe(boolean triggerLongSwipe) {
++        if (mPostCommitAnimationInProgress) {
++            return;
++        }
++        mTriggerLongSwipe = triggerLongSwipe;
++    }
++
+     private void setSwipeThresholds(
+             float linearDistance,
+             float maxDistance,
+@@ -869,6 +889,11 @@ private void invokeOrCancelBack(@NonNull BackTouchTracker touchTracker) {
+                 dispatchOnBackInvoked(callback);
+             } else {
+                 tryDispatchOnBackCancelled(callback);
++                if (mTriggerLongSwipe) {
++                    sendEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK,
++                            KeyEvent.FLAG_LONG_SWIPE);
++                    sendEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK, KeyEvent.FLAG_LONG_SWIPE);
++                }
+             }
+         }
+         mRealCallbackInvoked = false;
+@@ -886,6 +911,9 @@ private void onGestureFinished() {
+                     "onGestureFinished called while no gesture is started");
+             return;
+         }
++        if (mTriggerLongSwipe) {
++            mCurrentTracker.setTriggerBack(false);
++        }
+         boolean triggerBack = activeTouchTracker.getTriggerBack();
+         ProtoLog.d(WM_SHELL_BACK_PREVIEW, "onGestureFinished() mTriggerBack == %s", triggerBack);
+ 
+@@ -942,6 +970,18 @@ private void onGestureFinished() {
+         startPostCommitAnimation();
+     }
+ 
++    private boolean sendEvent(int action, int code, int flags) {
++        long when = SystemClock.uptimeMillis();
++        final KeyEvent ev = new KeyEvent(when, when, action, code, 0 /* repeat */,
++                0 /* metaState */, KeyCharacterMap.VIRTUAL_KEYBOARD, 0 /* scancode */,
++                flags | KeyEvent.FLAG_FROM_SYSTEM | KeyEvent.FLAG_VIRTUAL_HARD_KEY,
++                InputDevice.SOURCE_KEYBOARD);
++
++        ev.setDisplayId(mContext.getDisplay().getDisplayId());
++        return mContext.getSystemService(InputManager.class).injectInputEvent(
++                ev, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
++    }
++
+     /**
+      * Start the phase 2 animation when gesture is released.
+      * Callback to {@link #onBackAnimationFinished} when it is finished or timeout.
+@@ -1079,6 +1119,7 @@ void finishBackNavigation(boolean triggerBack) {
+             mBackNavigationInfo = null;
+             requestTopUi(false, mPreviousNavigationType);
+         }
++        mTriggerLongSwipe = false;
+     }
+ 
+     private void startLatencyTracking() {
+diff --git a/packages/SystemUI/plugin/src/com/android/systemui/plugins/NavigationEdgeBackPlugin.java b/packages/SystemUI/plugin/src/com/android/systemui/plugins/NavigationEdgeBackPlugin.java
+index d0243cfd8bdf6..0504404c3db1c 100644
+--- a/packages/SystemUI/plugin/src/com/android/systemui/plugins/NavigationEdgeBackPlugin.java
++++ b/packages/SystemUI/plugin/src/com/android/systemui/plugins/NavigationEdgeBackPlugin.java
+@@ -42,6 +42,9 @@ public interface NavigationEdgeBackPlugin extends Plugin {
+     /** Sets the callback that should be invoked when a Back gesture is detected. */
+     void setBackCallback(BackCallback callback);
+ 
++    /** Specifies if the long swipe should be enabled or not. */
++    default void setLongSwipeEnabled(boolean enabled) {}
++
+     /** Sets the base LayoutParams for the UI. */
+     void setLayoutParams(WindowManager.LayoutParams layoutParams);
+ 
+@@ -54,7 +57,7 @@ public interface NavigationEdgeBackPlugin extends Plugin {
+     /** Callback to let the system react to the detected back gestures. */
+     interface BackCallback {
+         /** Indicates that a Back gesture was recognized and the system should go back. */
+-        void triggerBack();
++        void triggerBack(boolean isLongPress);
+ 
+         /** Indicates that the gesture was cancelled and the system should not go back. */
+         void cancelBack();
+@@ -65,5 +68,12 @@ interface BackCallback {
+          * @param triggerBack if back will be triggered in current state.
+          */
+         void setTriggerBack(boolean triggerBack);
++
++        /**
++         * Indicates if long swipe will be triggered if committed in current state.
++         *
++         * @param triggerLongSwipe if long swipe will be triggered in current state.
++         */
++        void setTriggerLongSwipe(boolean triggerLongSwipe);
+     }
+ }
+diff --git a/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/BackPanel.kt b/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/BackPanel.kt
+index 138ac8668a14d..76f7b994e4b72 100644
+--- a/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/BackPanel.kt
++++ b/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/BackPanel.kt
+@@ -121,6 +121,8 @@ class BackPanel(context: Context, private val latencyTracker: LatencyTracker) :
+             maximumValue = 1f,
+         )
+ 
++    var triggerLongSwipe = false
++
+     private val allAnimatedFloat =
+         setOf(
+             arrowLength,
+@@ -295,6 +297,9 @@ class BackPanel(context: Context, private val latencyTracker: LatencyTracker) :
+         arrowPath.lineTo(0f, 0f)
+         arrowPath.lineTo(dx, dy)
+         arrowPath.moveTo(dx, -dy)
++        if (triggerLongSwipe) {
++            arrowPath.addPath(arrowPath, arrowPaint.strokeWidth * 2.0f * -1, 0.0f)
++        }
+         return arrowPath
+     }
+ 
+@@ -509,6 +514,9 @@ class BackPanel(context: Context, private val latencyTracker: LatencyTracker) :
+         val arrowPath = calculateArrowPath(dx = dx, dy = dy)
+         val arrowPaint =
+             arrowPaint.apply { alpha = (255 * min(arrowAlpha.pos, backgroundAlpha.pos)).toInt() }
++        if (isLeftPanel) {
++            canvas.scale(-1f, 1f, dx / 2f, dy / 2f)
++        }
+         canvas.drawPath(arrowPath, arrowPaint)
+         canvas.restore()
+ 
+diff --git a/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/BackPanelController.kt b/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/BackPanelController.kt
+index b628a68b7fcae..912f3ec00424b 100644
+--- a/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/BackPanelController.kt
++++ b/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/BackPanelController.kt
+@@ -159,6 +159,10 @@ constructor(
+ 
+     internal val failsafeRunnable = Runnable { onFailsafe() }
+ 
++    private var longSwipeThreshold = 0f
++    private var triggerLongSwipe = false
++    private var isLongSwipeEnabled = true
++
+     internal enum class GestureState {
+         /* Arrow is off the screen and invisible */
+         GONE,
+@@ -282,13 +286,16 @@ constructor(
+                 startIsLeft = mView.isLeftPanel
+                 hasPassedDragSlop = false
+                 mView.resetStretch()
++                mView.triggerLongSwipe = false
+             }
+             MotionEvent.ACTION_MOVE -> {
+                 if (dragSlopExceeded(event.x, startX)) {
++                    mView.triggerLongSwipe = triggerLongSwipe
+                     handleMoveEvent(event)
+                 }
+             }
+             MotionEvent.ACTION_UP -> {
++                mView.triggerLongSwipe = triggerLongSwipe
+                 when (currentState) {
+                     GestureState.ENTRY -> {
+                         if (
+@@ -346,6 +353,7 @@ constructor(
+                 velocityTracker = null
+             }
+             MotionEvent.ACTION_CANCEL -> {
++                mView.triggerLongSwipe = triggerLongSwipe
+                 // Receiving a CANCEL implies that something else intercepted
+                 // the gesture, i.e., the user did not cancel their gesture.
+                 // Therefore, disappear immediately, with minimum fanfare.
+@@ -489,6 +497,10 @@ constructor(
+             }
+         }
+ 
++        if (isLongSwipeEnabled) {
++            setTriggerLongSwipe(abs(xTranslation) > longSwipeThreshold)
++        }
++
+         setArrowStrokeAlpha(gestureProgress)
+         setVerticalTranslation(yOffset)
+     }
+@@ -644,6 +656,26 @@ constructor(
+         windowManager.addView(mView, layoutParams)
+     }
+ 
++    override fun setLongSwipeEnabled(enabled: Boolean) {
++        longSwipeThreshold = if (enabled) MathUtils.min(
++            displaySize.x * 0.45f, layoutParams.width * 2.5f) else 0.0f
++        isLongSwipeEnabled = longSwipeThreshold > 0
++        setTriggerLongSwipe(isLongSwipeEnabled && triggerLongSwipe)
++    }
++
++    private fun setTriggerLongSwipe(enabled: Boolean) {
++        if (triggerLongSwipe != enabled) {
++            triggerLongSwipe = enabled
++            vibratorHelper.performHapticFeedback(
++                    mView,
++                    HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE
++            )
++            updateRestingArrowDimens()
++            cancelFailsafe()
++            mView.cancelAnimations()
++            mView.triggerLongSwipe = triggerLongSwipe
++            updateConfiguration()
++            backCallback.setTriggerLongSwipe(triggerLongSwipe)
++        }
++    }
++
+     private fun isFlungAwayFromEdge(endX: Float, startX: Float = touchDeltaStartX): Boolean {
+         val flingDistance = if (mView.isLeftPanel) endX - startX else startX - endX
+         val flingVelocity =
+@@ -877,13 +913,17 @@ constructor(
+             GestureState.COMMITTED -> {
+                 // When flung, trigger back immediately but don't fire again
+                 // once state resolves to committed.
+-                if (previousState != GestureState.FLUNG) backCallback.triggerBack()
++                if (previousState != GestureState.FLUNG) backCallback.triggerBack(false)
+             }
+             GestureState.ENTRY,
+             GestureState.INACTIVE -> {
++                setTriggerLongSwipe(false)
+                 backCallback.setTriggerBack(false)
+             }
+             GestureState.ACTIVE -> {
++                if (triggerLongSwipe) {
++                    backCallback.triggerBack(false)
++                }
+                 backCallback.setTriggerBack(true)
+             }
+             GestureState.GONE -> {}
+diff --git a/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java b/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java
+index 5a2b361292927..d9bc56182601d 100644
+--- a/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java
++++ b/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java
+@@ -282,6 +282,7 @@ public void onPropertiesChanged(DeviceConfig.Properties properties) {
+     private boolean mIsEnabled;
+     private boolean mIsNavBarShownTransiently;
+     private boolean mIsBackGestureAllowed;
++    private boolean mIsLongSwipeEnabled = true;
+     private boolean mIsTrackpadThreeFingerSwipe;
+     private boolean mIsButtonForcedVisible;
+ 
+@@ -327,13 +331,15 @@ public void onPropertiesChanged(DeviceConfig.Properties properties) {
+     private final NavigationEdgeBackPlugin.BackCallback mBackCallback =
+             new NavigationEdgeBackPlugin.BackCallback() {
+                 @Override
+-                public void triggerBack() {
++                public void triggerBack(boolean isLongPress) {
+                     // Notify FalsingManager that an intentional gesture has occurred.
+                     mFalsingManager.isFalseTouch(BACK_GESTURE);
+                     // Only inject back keycodes when ahead-of-time back dispatching is disabled.
+                     if (mBackAnimation == null) {
+-                        boolean sendDown = sendEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK);
+-                        boolean sendUp = sendEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK);
++                        boolean sendDown = sendEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK,
++                                isLongPress ? KeyEvent.FLAG_LONG_SWIPE : 0);
++                        boolean sendUp = sendEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK,
++                                isLongPress ? KeyEvent.FLAG_LONG_SWIPE : 0);
+                         if (DEBUG_MISSING_GESTURE) {
+                             Log.d(DEBUG_MISSING_GESTURE_TAG, "Triggered back: down="
+                                     + sendDown + ", up=" + sendUp);
+@@ -366,6 +375,13 @@ public void setTriggerBack(boolean triggerBack) {
+                         mBackAnimation.setTriggerBack(triggerBack);
+                     }
+                 }
++
++                @Override
++                public void setTriggerLongSwipe(boolean triggerLongSwipe) {
++                    if (mBackAnimation != null) {
++                        mBackAnimation.setTriggerLongSwipe(triggerLongSwipe);
++                    }
++                }
+             };
+ 
+     private final SysUiState.SysUiStateCallback mSysUiStateCallback =
+@@ -853,6 +869,7 @@ private void updateIsEnabledInner() {
+ 
+                     // Add a nav bar panel window
+                     resetEdgeBackPlugin();
++                    updateLongSwipeWidth();
+                 }
+ 
+                 // Begin listening to changes in blocked activities list
+@@ -896,6 +913,12 @@ public boolean isButtonForcedVisible() {
+         return mIsButtonForcedVisible;
+     }
+ 
++    private void updateLongSwipeWidth() {
++        if (mIsEnabled && mEdgeBackPlugin != null) {
++            mEdgeBackPlugin.setLongSwipeEnabled(mIsLongSwipeEnabled);
++        }
++    }
++
+     /**
+      * Update the PiP bounds, used for exclusion calculation.
+      */
+@@ -1420,6 +1438,7 @@ private void updateDisplaySize() {
+             mEdgeBackPlugin.setDisplaySize(mDisplaySize);
+         }
+         updateBackAnimationThresholds();
++        updateLongSwipeWidth();
+     }
+ 
+     private void updateBackAnimationThresholds() {
+@@ -1433,11 +1452,11 @@ private void updateBackAnimationThresholds() {
+         mBackAnimation.setSwipeThresholds(linearDistance, maxDistance, mNonLinearFactor);
+     }
+ 
+-    private boolean sendEvent(int action, int code) {
++    private boolean sendEvent(int action, int code, int flags) {
+         long when = SystemClock.uptimeMillis();
+         final KeyEvent ev = new KeyEvent(when, when, action, code, 0 /* repeat */,
+                 0 /* metaState */, KeyCharacterMap.VIRTUAL_KEYBOARD, 0 /* scancode */,
+-                KeyEvent.FLAG_FROM_SYSTEM | KeyEvent.FLAG_VIRTUAL_HARD_KEY,
++                flags | KeyEvent.FLAG_FROM_SYSTEM | KeyEvent.FLAG_VIRTUAL_HARD_KEY,
+                 InputDevice.SOURCE_KEYBOARD);
+ 
+         ev.setDisplayId(mContext.getDisplay().getDisplayId());
+diff --git a/packages/SystemUI/tests/src/com/android/systemui/navigationbar/gestural/BackPanelControllerTest.kt b/packages/SystemUI/tests/src/com/android/systemui/navigationbar/gestural/BackPanelControllerTest.kt
+index b169cc12f08a1..ca98777e90703 100644
+--- a/packages/SystemUI/tests/src/com/android/systemui/navigationbar/gestural/BackPanelControllerTest.kt
++++ b/packages/SystemUI/tests/src/com/android/systemui/navigationbar/gestural/BackPanelControllerTest.kt
+@@ -137,7 +137,7 @@ class BackPanelControllerTest : SysuiTestCase() {
+         finishTouchActionUp(START_X + touchSlop + triggerThreshold + 1)
+         assertThat(mBackPanelController.currentState)
+             .isEqualTo(BackPanelController.GestureState.COMMITTED)
+-        verify(backCallback).triggerBack()
++        verify(backCallback).triggerBack(false)
+ 
+         // Because the Handler that is typically used for transitioning the arrow state from
+         // COMMITTED to GONE is used as an animation-end-listener on a SpringAnimation,
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index ed60100ef0f10..183d25688a29e 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -42,6 +42,7 @@
+ import android.app.SearchManager;
+ import android.content.ActivityNotFoundException;
+ import android.content.BroadcastReceiver;
+ import android.content.Context;
++import android.media.AudioManager;
+ 
+@@ -822,6 +823,7 @@ public void onDrawn() {
+     private int mTorchTimeout;
+     private PendingIntent mTorchOffPendingIntent;
+ 
++    private boolean mLongSwipeDown;
+     private CameraAvailbilityListener mCameraAvailabilityListener;
+ 
+     private class PolicyHandler extends Handler {
+@@ -5046,8 +5048,27 @@ && isWakeKeyWhenScreenOff(keyCode)) {
+         // Handle special keys.
+         switch (keyCode) {
+             case KeyEvent.KEYCODE_BACK: {
++                boolean isLongSwipe = (event.getFlags() & KeyEvent.FLAG_LONG_SWIPE) != 0;
+                 notifyKeyGestureCompletedOnActionUp(event,
+                         KeyGestureEvent.KEY_GESTURE_TYPE_BACK);
++
++                if (mLongSwipeDown && isLongSwipe && !down) {
++                    // Open Volume Panel without changing volume step
++                    AudioManager audioManager = mContext.getSystemService(AudioManager.class);
++                    if (audioManager != null) {
++                        audioManager.adjustSuggestedStreamVolume(
++                                AudioManager.ADJUST_SAME,
++                                AudioManager.USE_DEFAULT_STREAM_TYPE,
++                                AudioManager.FLAG_SHOW_UI);
++                    }
++                    mLongSwipeDown = false;
++                    result &= ~ACTION_PASS_TO_USER;
++                    break;
++                }
++                mLongSwipeDown = isLongSwipe && down;
++                if (mLongSwipeDown) {
++                    result &= ~ACTION_PASS_TO_USER;
++                    break;
++                }
++
+                 if (down) {
+                     // There may have other embedded activities on the same Task. Try to move the
+                     // focus before processing the back event.
