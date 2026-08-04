@@ -1,13 +1,13 @@
 #!/usr/bin/bash
-
-# TODO: Do signing
+set -e
 
 WD=$PWD
+# REF: https://grapheneos.org/build#generating-release-signing-keys
+KEY_DIR="$WD/keys"
 
 cd build/src
 . build/envsetup.sh
-
-DEBUG="true"
+. $PWD/common.sh
 
 V="user"; [ "$DEBUG" = "true" ] && V="userdebug"
 
@@ -16,15 +16,133 @@ AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//
 ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
 ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed 's/.*"\([^"]*\)".*/\1/')
 
-bash vendor/null-priv/keys/sign.sh
+lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${V}"
 
+TARGET_FILES=$(ls $OUT/obj/PACKAGING/target_files_intermediates/*-target_files-*.zip | head -n 1)
+
+echo "==> Resigning target files using keys from $KEY_DIR..."
+
+AVB_PKMD="$KEY_DIR/avb_pkmd.bin"
+AVB_ALGORITHM=SHA256_RSA4096
+
+# REF: https://github.com/GrapheneOS/script/blob/16-qpr2/generate-release.sh#L74
+sign_target_files_apks -o -d "$KEY_DIR" --avb_vbmeta_key "$KEY_DIR/avb.pem" --avb_vbmeta_algorithm $AVB_ALGORITHM \
+    --extra_apks com.android.adbd.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.adbd.apex="$KEY_DIR/avb.pem" \
+    --extra_apks AdServicesApk.apk="$KEY_DIR/releasekey" \
+    --extra_apks com.android.adservices.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.adservices.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.apex.cts.shim.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.apex.cts.shim.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.appsearch.apk.apk="$KEY_DIR/releasekey" \
+    --extra_apks com.android.appsearch.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.appsearch.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.art.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.art.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.art.debug.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.art.debug.apex="$KEY_DIR/avb.pem" \
+    --extra_apks Bluetooth.apk="$KEY_DIR/bluetooth" \
+    --extra_apks com.android.bt.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.bt.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.cellbroadcast.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.cellbroadcast.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.compos.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.compos.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.configinfrastructure.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.configinfrastructure.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.conscrypt.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.conscrypt.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.crashrecovery.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.crashrecovery.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.devicelock.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.devicelock.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.extservices.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.extservices.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.hardware.biometrics.face.virtual.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.hardware.biometrics.face.virtual.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.hardware.biometrics.fingerprint.virtual.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.hardware.biometrics.fingerprint.virtual.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.hardware.cas.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.hardware.cas.apex="$KEY_DIR/avb.pem" \
+    --extra_apks HealthConnectBackupRestore.apk="$KEY_DIR/releasekey" \
+    --extra_apks HealthConnectController.apk="$KEY_DIR/releasekey" \
+    --extra_apks com.android.healthfitness.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.healthfitness.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.i18n.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.i18n.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.ipsec.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.ipsec.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.media.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.media.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.media.swcodec.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.media.swcodec.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.mediaprovider.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.mediaprovider.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.neuralnetworks.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.neuralnetworks.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.nfcservices.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.nfcservices.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.npumanager.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.npumanager.apex="$KEY_DIR/avb.pem" \
+    --extra_apks FederatedCompute.apk="$KEY_DIR/releasekey" \
+    --extra_apks com.android.ondevicepersonalization.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.ondevicepersonalization.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.os.statsd.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.os.statsd.apex="$KEY_DIR/avb.pem" \
+    --extra_apks SafetyCenterResources.apk="$KEY_DIR/releasekey" \
+    --extra_apks com.android.permission.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.permission.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.profiling.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.profiling.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.resolv.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.resolv.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.rkpd.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.rkpd.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.runtime.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.runtime.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.scheduling.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.scheduling.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.sdkext.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.sdkext.apex="$KEY_DIR/avb.pem" \
+    --extra_apks TelecomServiceResources.apk="$KEY_DIR/releasekey" \
+    --extra_apks TelecomUi.apk="$KEY_DIR/releasekey" \
+    --extra_apks com.android.telephonycore.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.telephonycore.apex="$KEY_DIR/avb.pem" \
+    --extra_apks ServiceConnectivityResources.apk="$KEY_DIR/releasekey" \
+    --extra_apks com.android.tethering.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.tethering.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.tzdata.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.tzdata.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.uprobestats.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.uprobestats.apex="$KEY_DIR/avb.pem" \
+    --extra_apks ServiceUwbResources.apk="$KEY_DIR/releasekey" \
+    --extra_apks com.android.uwb.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.uwb.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.android.virt.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.virt.apex="$KEY_DIR/avb.pem" \
+    --extra_apks WebAppService.apk="$KEY_DIR/releasekey" \
+    --extra_apks com.android.webapp.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.webapp.apex="$KEY_DIR/avb.pem" \
+    --extra_apks OsuLogin.apk="$KEY_DIR/releasekey" \
+    --extra_apks ServiceWifiResources.apk="$KEY_DIR/releasekey" \
+    --extra_apks WifiDialog.apk="$KEY_DIR/releasekey" \
+    --extra_apks com.android.wifi.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.android.wifi.apex="$KEY_DIR/avb.pem" \
+    --extra_apks com.google.pixel.camera.hal.apex="$KEY_DIR/releasekey" \
+    --extra_apex_payload_key com.google.pixel.camera.hal.apex="$KEY_DIR/avb.pem" \
+    $TARGET_FILES ${OUT}/signed-target_files.zip
+
+echo "==> Extracting signed system.img..."
 rm -fv "${OUT}/system.img"
 unzip -j -q "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
 rm -fv "${OUT}/signed-target_files.zip"
+
 mv -v "${OUT}/system.img" "$WD/system.img"
 
 TAG="${ANDROID_VERSION}-gos${GRAPHENEOS_TAG}"
 img="RestlessOS-arm64-ab-${TAG}.img"
 cd $WD
 mv -v system.img "${img}"
+
+echo "==> Compressing signed image..."
 xz --best --compress --memlimit-compress=0 --threads=0 -v "${img}"

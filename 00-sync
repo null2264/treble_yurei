@@ -6,6 +6,8 @@ TAG=$(curl -fsS "https://grapheneos.org/releases" \
     | sort -nr | head -1)
 [ -z "$TAG" ] && { echo "ERROR: failed to resolve tag"; exit 1; }
 
+. $PWD/common.sh
+
 mkdir -p build/src
 cd build/src
 repo init --depth=1 --git-lfs \
@@ -19,8 +21,6 @@ cp -v $WD/configs/manifests/*.xml .repo/local_manifests/
 for tier in trebledroid trebledroid-staging rom personal yurei; do
     $WD/patches/apply.sh . "${tier}"
 done
-
-DEBUG="true"
 
 if [ "$DEBUG" = "true" ]; then
     $WD/patches/apply.sh . debug-builds
