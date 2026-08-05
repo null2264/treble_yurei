@@ -12,6 +12,9 @@ cd keys/
 CN=Yurei
 for key in ${signing_keys[@]}; do
     ../development/tools/make_key $key "/CN=$CN/" || true
+
+    openssl pkcs8 -in "${key}.pk8" -topk8 -nocrypt -outform DER -out "${key}.pk8.tmp"
+    mv "${key}.pk8.tmp" "${key}.pk8"
 done
 openssl genrsa 4096 | openssl pkcs8 -topk8 -nocrypt -out avb.pem
 ../external/avb/avbtool.py extract_public_key --key avb.pem --output avb_pkmd.bin
