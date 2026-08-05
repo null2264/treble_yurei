@@ -18,7 +18,7 @@ ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textpr
 
 lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${V}"
 
-TARGET_FILES=$(ls $OUT/obj/PACKAGING/target_files_intermediates/*-target_files-*.zip | head -n 1)
+TARGET_FILES=$(ls $OUT/obj/PACKAGING/target_files_intermediates/treble_arm64_bvN-target_files.zip | head -n 1)
 
 echo "==> Resigning target files using keys from $KEY_DIR..."
 
