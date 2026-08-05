@@ -8,6 +8,7 @@
   <remote name="phhusson" fetch="https://github.com/phhusson/" />
   <remote name="ponces" fetch="https://github.com/ponces/" />
   <remote name="trebledroid" fetch="https://github.com/TrebleDroid/" />
+  <remote name="null2264" fetch="https://github.com/null2264/" />
 
   <!-- trebledroid: device -->
   <project path="device/phh/treble" name="device_phh_treble" remote="trebledroid" revision="android-16.0" clone-depth="1" />
@@ -35,7 +36,7 @@
   <!-- <project path="vendor/cawilliamson-priv" name="vendor_cawilliamson-priv" remote="cawilliamson-priv" revision="main" clone-depth="1" /> -->
 
   <!-- trebledroid: hardware overlay -->
-  <project path="vendor/hardware_overlay" name="vendor_hardware_overlay" remote="trebledroid" revision="pie" clone-depth="1" />
+  <project path="vendor/hardware_overlay" name="vendor_hardware_overlay" remote="null2264" revision="pie" clone-depth="1" />
 
   <!-- trebledroid: vendor interface -->
   <project path="vendor/interfaces" name="vendor_interfaces" remote="trebledroid" revision="android-16.0" clone-depth="1" />
