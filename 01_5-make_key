@@ -1,0 +1,18 @@
+#!/usr/bin/bash
+set -e
+
+WD=$PWD
+
+cd build/src
+. build/envsetup.sh
+. $WD/common.sh
+
+mkdir -p keys/
+cd keys/
+CN=Yurei
+for key in ${signing_keys[@]}; do
+    ../development/tools/make_key $key "/CN=$CN/"
+done
+openssl genrsa 4096 | openssl pkcs8 -topk8 -v2 des3 -out avb.pem
+../external/avb/avbtool.py extract_public_key --key avb.pem --output avb_pkmd.bin
+cd ../
