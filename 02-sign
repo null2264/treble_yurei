@@ -4,7 +4,6 @@ set -e
 WD=$PWD
 # REF: https://grapheneos.org/build#generating-release-signing-keys
 KEY_DIR="$WD/keys"
-ANDROID_PW_FILE="$WD/key_pw"
 
 cd build/src
 . build/envsetup.sh
