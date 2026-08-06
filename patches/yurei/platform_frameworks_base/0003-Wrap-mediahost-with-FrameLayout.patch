@@ -1,0 +1,69 @@
+From 916d1c81cb6a851530cf98371c64937ba6744cfa Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Thu, 6 Aug 2026 18:02:23 +0700
+Subject: [PATCH] SystemUI: Wrap MediaHost view in FrameLayout
+
+Hopefully fix recomp issue
+---
+ .../qs/composefragment/QSFragmentCompose.kt   | 34 +++++++++++++++----
+ 1 file changed, 27 insertions(+), 7 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt b/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt
+index b32d7ad9654f1..80411bc9be799 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt
++++ b/packages/SystemUI/src/com/android/systemui/qs/composefragment/QSFragmentCompose.kt
+@@ -1418,19 +1418,34 @@ private fun ContentScope.MediaObject(
+         Box {
+             AndroidView(
+                 modifier = modifier,
+-                factory = {
+-                    mediaHost.hostView.apply {
+-                        layoutParams =
++                factory = { ctx ->
++                    FrameLayout(ctx).apply {
++                        layoutParams = FrameLayout.LayoutParams(
++                            FrameLayout.LayoutParams.MATCH_PARENT,
++                            FrameLayout.LayoutParams.WRAP_CONTENT,
++                        )
++                    }
++                },
++                update = { container ->
++                    val view = mediaHost.hostView
++
++                    (view.parent as? ViewGroup)?.let { p ->
++                        if (p !== container) p.removeView(view)
++                    }
++
++                    if (view.parent == null) {
++                        container.removeAllViews()
++                        container.addView(
++                            view,
+                             FrameLayout.LayoutParams(
+                                 FrameLayout.LayoutParams.MATCH_PARENT,
+                                 FrameLayout.LayoutParams.WRAP_CONTENT,
+                             )
++                        )
+                     }
+-                },
+-                update = { view ->
++
+                     view.update()
+                     if (!Flags.mediaFrameDimensionsFix()) {
+-                        // Update layout params if host view bounds are higher than its child.
+                         val height = mediaHost.hostView.height
+                         val width = mediaHost.hostView.width
+                         var measure = false
+@@ -1451,7 +1466,12 @@ private fun ContentScope.MediaObject(
+                         }
+                     }
+                 },
+-                onReset = {},
++                onReset = { container ->
++                    val view = mediaHost.hostView
++                    if (view.parent === container) {
++                        container.removeView(view)
++                    }
++                },
+             )
+         }
+     }
