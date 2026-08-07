@@ -1,0 +1,101 @@
+From 6973238a9832f1ca7fd37be0b1eb37d92e90d0a9 Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Fri, 7 Aug 2026 16:03:20 +0700
+Subject: [PATCH] feat: Open Volume Panel when edge swipe is happening from the
+ left
+
+---
+ core/java/android/view/KeyEvent.java                 | 12 ++++++++++++
+ .../gestural/EdgeBackGestureHandler.java             |  8 ++++----
+ .../android/server/policy/PhoneWindowManager.java    | 11 +++++++++++
+ 3 files changed, 27 insertions(+), 4 deletions(-)
+
+diff --git a/core/java/android/view/KeyEvent.java b/core/java/android/view/KeyEvent.java
+index c6d73268561e5..811a1d200e072 100644
+--- a/core/java/android/view/KeyEvent.java
++++ b/core/java/android/view/KeyEvent.java
+@@ -2159,6 +2159,18 @@ public class KeyEvent extends InputEvent implements Parcelable {
+     @TestApi
+     public static final int FLAG_IS_ACCESSIBILITY_EVENT = INPUT_EVENT_FLAG_IS_ACCESSIBILITY_EVENT;
+ 
++    /**
++     * Set when edge swipe is happening on the left edge of the screen.
++     * 
++     * For now it's hardcoded to open volume panel
++     */
++    public static final int FLAG_IS_LEFT_EDGE = 0x1000;
++
++    /**
++     * Set when edge swipe is long.
++     */
++    public static final int FLAG_LONG_SWIPE = 0x2000;
++
+     /**
+      * Signifies that the key is being predispatched.
+      * @hide
+diff --git a/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java b/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java
+index 5a2b361292927..1dcb6cbe65a16 100644
+--- a/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java
++++ b/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java
+@@ -332,8 +332,8 @@ public void triggerBack() {
+                     mFalsingManager.isFalseTouch(BACK_GESTURE);
+                     // Only inject back keycodes when ahead-of-time back dispatching is disabled.
+                     if (mBackAnimation == null) {
+-                        boolean sendDown = sendEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK);
+-                        boolean sendUp = sendEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK);
++                        boolean sendDown = sendEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK, mIsOnLeftEdge ? KeyEvent.FLAG_IS_LEFT_EDGE : 0);
++                        boolean sendUp = sendEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK, mIsOnLeftEdge ? KeyEvent.FLAG_IS_LEFT_EDGE : 0);
+                         if (DEBUG_MISSING_GESTURE) {
+                             Log.d(DEBUG_MISSING_GESTURE_TAG, "Triggered back: down="
+                                     + sendDown + ", up=" + sendUp);
+@@ -1433,11 +1433,11 @@ private void updateBackAnimationThresholds() {
+         mBackAnimation.setSwipeThresholds(linearDistance, maxDistance, mNonLinearFactor);
+     }
+ 
+-    private boolean sendEvent(int action, int code) {
++    private boolean sendEvent(int action, int code, int flags) {
+         long when = SystemClock.uptimeMillis();
+         final KeyEvent ev = new KeyEvent(when, when, action, code, 0 /* repeat */,
+                 0 /* metaState */, KeyCharacterMap.VIRTUAL_KEYBOARD, 0 /* scancode */,
+-                KeyEvent.FLAG_FROM_SYSTEM | KeyEvent.FLAG_VIRTUAL_HARD_KEY,
++                flags | KeyEvent.FLAG_FROM_SYSTEM | KeyEvent.FLAG_VIRTUAL_HARD_KEY,
+                 InputDevice.SOURCE_KEYBOARD);
+ 
+         ev.setDisplayId(mContext.getDisplay().getDisplayId());
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index f6efb1b199232..bfc1e7fe01248 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -4380,6 +4380,11 @@ void initializeHdmiStateInternal() {
+         mDefaultDisplayPolicy.setHdmiPlugged(plugged, true /* force */);
+     }
+ 
++    private void toggleVolumePanel() {
++        AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
++        am.adjustVolume(AudioManager.ADJUST_SAME, AudioManager.FLAG_SHOW_UI);
++    }
++
+     // TODO(b/117479243): handle it in InputPolicy
+     /** {@inheritDoc} */
+     @Override
+@@ -4535,14 +4540,20 @@ && isWakeKeyWhenScreenOff(keyCode)) {
+         // Handle special keys.
+         switch (keyCode) {
+             case KeyEvent.KEYCODE_BACK: {
++                boolean isLeftEdge = (event.getFlags() & KeyEvent.FLAG_IS_LEFT_EDGE) != 0;
+                 notifyKeyGestureCompletedOnActionUp(event,
+                         KeyGestureEvent.KEY_GESTURE_TYPE_BACK);
++
+                 if (down) {
+                     // There may have other embedded activities on the same Task. Try to move the
+                     // focus before processing the back event.
+                     mWindowManagerInternal.moveFocusToAdjacentEmbeddedActivityIfNeeded();
+                     mBackKeyHandled = false;
+                 } else {
++                    if (isLeftEdge) {
++                        toggleVolumePanel();
++                        break;
++                    }
+                     if (!hasLongPressOnBackBehavior()) {
+                         mBackKeyHandled |= backKeyPress();
+                     }
