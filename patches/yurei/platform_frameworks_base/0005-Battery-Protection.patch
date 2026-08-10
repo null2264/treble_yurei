@@ -41,7 +41,7 @@ index 0000000000000..2cc3baadd9a85
 +            fw.write(value);
 +            fw.flush();
 +        } catch (IOException e) {
-+            Slog.e(TAG, "Failed to write to charging node: " + nodePath, e);
++            Slog.e("BatteryProtectionUtil", "Failed to write to charging node: " + nodePath, e);
 +        }
 +    }
 +}
