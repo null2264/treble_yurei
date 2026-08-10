@@ -10,21 +10,17 @@ TAG=$(curl -fsS "https://grapheneos.org/releases" \
     | sort -nr | head -1)
 [ -z "$TAG" ] && { echo "ERROR: failed to resolve tag"; exit 1; }
 
-mkdir $WD/bin
-curl -sf -o $WD/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
-chmod a+x $WD/bin/repo
-
 . $WD/common.sh
 
 mkdir -p build/src
 cd build/src
-$WD/bin/repo init --depth=1 --git-lfs \
+repo init --depth=1 --git-lfs \
     --manifest-branch "refs/tags/2026061600" \
     --manifest-url https://github.com/GrapheneOS/platform_manifest.git
 mkdir -p .repo/local_manifests
 cp -v $WD/configs/manifests/*.xml .repo/local_manifests/
 
-$WD/bin/repo sync --force-sync --jobs=4 --no-clone-bundle --no-tags || exit 1  # Probably haven't generated a password from 'https://android.googlesource.com/'
+repo sync --force-sync --jobs=4 --no-clone-bundle --no-tags || exit 1  # Probably haven't generated a password from 'https://android.googlesource.com/'
 
 for tier in trebledroid trebledroid-staging rom personal yurei; do
     $WD/patches/apply.sh . "${tier}"
