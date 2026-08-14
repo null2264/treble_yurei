@@ -1,8 +1,8 @@
 From 6973238a9832f1ca7fd37be0b1eb37d92e90d0a9 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 7 Aug 2026 16:03:20 +0700
-Subject: [PATCH] feat: Open Volume Panel when edge swipe is happening from the
- left
+Subject: [PATCH 1/4] feat: Open Volume Panel when edge swipe is happening from
+ the left
 
 ---
  core/java/android/view/KeyEvent.java                 | 12 ++++++++++++
@@ -19,14 +19,14 @@ index c6d73268561e5..811a1d200e072 100644
      public static final int FLAG_IS_ACCESSIBILITY_EVENT = INPUT_EVENT_FLAG_IS_ACCESSIBILITY_EVENT;
  
 +    /**
-+     * Set when edge swipe is happening on the left edge of the screen. For now it's hardcoded to open volume panel.
++     * Set when edge swipe is happening on the left edge of the screen.
 +     * 
-+     * @hide
++     * For now it's hardcoded to open volume panel
 +     */
 +    public static final int FLAG_IS_LEFT_EDGE = 0x1000;
 +
 +    /**
-+     * @hide
++     * Set when edge swipe is long.
 +     */
 +    public static final int FLAG_LONG_SWIPE = 0x2000;
 +
@@ -99,3 +99,109 @@ index f6efb1b199232..bfc1e7fe01248 100644
                      if (!hasLongPressOnBackBehavior()) {
                          mBackKeyHandled |= backKeyPress();
                      }
+
+From b93a32c5dab53661f6824b4e864b2c38867d9249 Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Fri, 14 Aug 2026 15:53:36 +0700
+Subject: [PATCH 2/4] fix: Add missing `@hide`
+
+---
+ core/java/android/view/KeyEvent.java | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/view/KeyEvent.java b/core/java/android/view/KeyEvent.java
+index 811a1d200e072..ffdc7e646c27c 100644
+--- a/core/java/android/view/KeyEvent.java
++++ b/core/java/android/view/KeyEvent.java
+@@ -2162,12 +2162,14 @@ public class KeyEvent extends InputEvent implements Parcelable {
+     /**
+      * Set when edge swipe is happening on the left edge of the screen.
+      * 
+-     * For now it's hardcoded to open volume panel
++     * For now it's hardcoded to open volume panel.
++     * @hide
+      */
+     public static final int FLAG_IS_LEFT_EDGE = 0x1000;
+ 
+     /**
+      * Set when edge swipe is long.
++     * @hide
+      */
+     public static final int FLAG_LONG_SWIPE = 0x2000;
+ 
+
+From db424424fa5f01adf237234a1f758e7a8542e735 Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Fri, 14 Aug 2026 15:55:05 +0700
+Subject: [PATCH 3/4] fix: Left swipe didn't send any event
+
+---
+ .../navigationbar/gestural/EdgeBackGestureHandler.java       | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java b/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java
+index 1dcb6cbe65a16..24157d7d3f9f1 100644
+--- a/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java
++++ b/packages/SystemUI/src/com/android/systemui/navigationbar/gestural/EdgeBackGestureHandler.java
+@@ -331,7 +331,7 @@ public void triggerBack() {
+                     // Notify FalsingManager that an intentional gesture has occurred.
+                     mFalsingManager.isFalseTouch(BACK_GESTURE);
+                     // Only inject back keycodes when ahead-of-time back dispatching is disabled.
+-                    if (mBackAnimation == null) {
++                    if (mIsOnLeftEdge || mBackAnimation == null) {
+                         boolean sendDown = sendEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK, mIsOnLeftEdge ? KeyEvent.FLAG_IS_LEFT_EDGE : 0);
+                         boolean sendUp = sendEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK, mIsOnLeftEdge ? KeyEvent.FLAG_IS_LEFT_EDGE : 0);
+                         if (DEBUG_MISSING_GESTURE) {
+@@ -1376,6 +1376,9 @@ private boolean isButtonPressFromMouse(MotionEvent ev) {
+     }
+ 
+     private void dispatchToBackAnimation(MotionEvent event) {
++        if (mIsOnLeftEdge) {
++            return;
++        }
+         if (mBackAnimation != null) {
+             mBackAnimation.onBackMotion(
+                     /* touchX = */ event.getX(),
+
+From bf79907ad1d8f252844eb08eefa14c86e44e52f7 Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Fri, 14 Aug 2026 15:58:17 +0700
+Subject: [PATCH 4/4] fix: Back action is still happened when volume panel is
+ opened
+
+---
+ .../android/server/policy/PhoneWindowManager.java  | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index bfc1e7fe01248..a1a01907729b3 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -4541,6 +4541,7 @@ && isWakeKeyWhenScreenOff(keyCode)) {
+         switch (keyCode) {
+             case KeyEvent.KEYCODE_BACK: {
+                 boolean isLeftEdge = (event.getFlags() & KeyEvent.FLAG_IS_LEFT_EDGE) != 0;
++                boolean isLongSwipe = (event.getFlags() & KeyEvent.FLAG_LONG_SWIPE) != 0;
+                 notifyKeyGestureCompletedOnActionUp(event,
+                         KeyGestureEvent.KEY_GESTURE_TYPE_BACK);
+ 
+@@ -4550,11 +4551,14 @@ && isWakeKeyWhenScreenOff(keyCode)) {
+                     mWindowManagerInternal.moveFocusToAdjacentEmbeddedActivityIfNeeded();
+                     mBackKeyHandled = false;
+                 } else {
+-                    if (isLeftEdge) {
+-                        toggleVolumePanel();
+-                        break;
+-                    }
+-                    if (!hasLongPressOnBackBehavior()) {
++                    if (isLeftEdge || isLongSwipe) {
++                        if (isLeftEdge) {
++                            toggleVolumePanel();
++                        } else if (isLongPress) {
++                            // TODO: For later, maybe
++                        }
++                        mBackKeyHandled = true;
++                    } else if (!hasLongPressOnBackBehavior()) {
+                         mBackKeyHandled |= backKeyPress();
+                     }
+                     // Don't pass back press to app if we've already handled it via long press
