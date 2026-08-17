@@ -1,7 +1,7 @@
 From 6973238a9832f1ca7fd37be0b1eb37d92e90d0a9 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 7 Aug 2026 16:03:20 +0700
-Subject: [PATCH 1/4] feat: Open Volume Panel when edge swipe is happening from
+Subject: [PATCH 1/5] feat: Open Volume Panel when edge swipe is happening from
  the left
 
 ---
@@ -103,7 +103,7 @@ index f6efb1b199232..bfc1e7fe01248 100644
 From b93a32c5dab53661f6824b4e864b2c38867d9249 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 14 Aug 2026 15:53:36 +0700
-Subject: [PATCH 2/4] fix: Add missing `@hide`
+Subject: [PATCH 2/5] fix: Add missing `@hide`
 
 ---
  core/java/android/view/KeyEvent.java | 4 +++-
@@ -133,7 +133,7 @@ index 811a1d200e072..ffdc7e646c27c 100644
 From db424424fa5f01adf237234a1f758e7a8542e735 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 14 Aug 2026 15:55:05 +0700
-Subject: [PATCH 3/4] fix: Left swipe didn't send any event
+Subject: [PATCH 3/5] fix: Left swipe didn't send any event
 
 ---
  .../navigationbar/gestural/EdgeBackGestureHandler.java       | 5 ++++-
@@ -166,7 +166,7 @@ index 1dcb6cbe65a16..24157d7d3f9f1 100644
 From bf79907ad1d8f252844eb08eefa14c86e44e52f7 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 14 Aug 2026 15:58:17 +0700
-Subject: [PATCH 4/4] fix: Back action is still happened when volume panel is
+Subject: [PATCH 4/5] fix: Back action is still happened when volume panel is
  opened
 
 ---
@@ -205,3 +205,27 @@ index bfc1e7fe01248..a1a01907729b3 100644
                          mBackKeyHandled |= backKeyPress();
                      }
                      // Don't pass back press to app if we've already handled it via long press
+
+From a0c4afab2a797d3ba4a4753d3bed5de0075dd691 Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 17:48:30 +0700
+Subject: [PATCH 5/5] fix: isLongSwipe not isLongPress
+
+Was I drunk or what?
+---
+ .../core/java/com/android/server/policy/PhoneWindowManager.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index a1a01907729b3..35b99b32d4b1a 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -4554,7 +4554,7 @@ && isWakeKeyWhenScreenOff(keyCode)) {
+                     if (isLeftEdge || isLongSwipe) {
+                         if (isLeftEdge) {
+                             toggleVolumePanel();
+-                        } else if (isLongPress) {
++                        } else if (isLongSwipe) {
+                             // TODO: For later, maybe
+                         }
+                         mBackKeyHandled = true;
