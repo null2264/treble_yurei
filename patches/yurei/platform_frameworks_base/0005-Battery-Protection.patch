@@ -1,7 +1,7 @@
 From 8a4280d0c91e4373a8f7f968026b7d47a8334e4f Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 7 Aug 2026 17:02:05 +0700
-Subject: [PATCH 1/8] feat: Battery Protect
+Subject: [PATCH 1/9] feat: Battery Protect
 
 Only works on Samsung since it uses Samsung's node
 ---
@@ -140,7 +140,7 @@ index e6dec70b52eb3..33b93dd49bfe7 100644
 From b3c4b6edf7f9ac0b1f5ab580f8d3d0928477725a Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 7 Aug 2026 17:08:24 +0700
-Subject: [PATCH 2/8] fix: Clean up when charger is unplugged
+Subject: [PATCH 2/9] fix: Clean up when charger is unplugged
 
 ---
  services/core/java/com/android/server/BatteryService.java | 6 +++++-
@@ -172,7 +172,7 @@ index 33b93dd49bfe7..dab3c6dafe41e 100644
 From 16fad671cd467bb2d59c74368376aa243d7d65ec Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 7 Aug 2026 17:09:46 +0700
-Subject: [PATCH 3/8] fix: Missing stuff
+Subject: [PATCH 3/9] fix: Missing stuff
 
 ---
  .../java/com/android/server/BatteryProtectionUtil.java     | 7 +++++++
@@ -211,7 +211,7 @@ index dab3c6dafe41e..a8da703163ff1 100644
 From 22df548c816985841e92aa2972d3ff90796ebac8 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 16:35:00 +0700
-Subject: [PATCH 4/8] fix: Fix infinite loop
+Subject: [PATCH 4/9] fix: Fix infinite loop
 
 ---
  .../java/com/android/server/BatteryService.java   | 15 ++++++++++++---
@@ -270,7 +270,7 @@ index a8da703163ff1..73493b2c6c8b3 100644
 From 6ab2cd707a83d10864f368c61b646937657f3e54 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 16:52:58 +0700
-Subject: [PATCH 5/8] refactor: Reduce IO usage
+Subject: [PATCH 5/9] refactor: Reduce IO usage
 
 ---
  .../android/server/BatteryProtectionUtil.java    | 16 ++++++++++++----
@@ -318,7 +318,7 @@ index 48d9db0be5c73..6a7bff0d44b73 100644
 From b92c5ce01c728a39d4080e977e40f02bfb273f50 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 16:53:49 +0700
-Subject: [PATCH 6/8] refactor: Clean up code and add some sanity checks
+Subject: [PATCH 6/9] refactor: Clean up code and add some sanity checks
 
 ---
  .../com/android/server/BatteryService.java    | 25 +++++++++----------
@@ -370,7 +370,7 @@ index 73493b2c6c8b3..51e38f4e79fdf 100644
 From 179a990ce7adde6f2177e062c320cf25c187e5ce Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 16:57:59 +0700
-Subject: [PATCH 7/8] fix: Check the wrong variable
+Subject: [PATCH 7/9] fix: Check the wrong variable
 
 ---
  .../core/java/com/android/server/BatteryProtectionUtil.java     | 2 +-
@@ -393,7 +393,7 @@ index 6a7bff0d44b73..9da6d5477538c 100644
 From cb9cbcd0a25c4676a5b2c63b04f9aa59630b8089 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 17:02:46 +0700
-Subject: [PATCH 8/8] fix: System -> Global
+Subject: [PATCH 8/9] fix: System -> Global
 
 ---
  services/core/java/com/android/server/BatteryService.java | 4 ++--
@@ -419,5 +419,33 @@ index 51e38f4e79fdf..108888dc84e3b 100644
 -        mBatteryProtect = Settings.System.getInt(
 +        mBatteryProtect = Settings.Global.getInt(
              mContext.getContentResolver(), "yurei_battery_protect", 0) == 1;
+     }
+ 
+
+From bc62707783bb6b72a9e6aff051d9883dcd736afe Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Tue, 18 Aug 2026 15:51:43 +0700
+Subject: [PATCH 9/9] fix: Realign charge state
+
+---
+ services/core/java/com/android/server/BatteryService.java | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/services/core/java/com/android/server/BatteryService.java b/services/core/java/com/android/server/BatteryService.java
+index 108888dc84e3b..d7671afac86c7 100644
+--- a/services/core/java/com/android/server/BatteryService.java
++++ b/services/core/java/com/android/server/BatteryService.java
+@@ -1654,6 +1654,13 @@ private void processBatteryProtectLocked() {
+         } else if (mHealthInfo.batteryLevel <= 75 && mChargeDisabled) {
+             BatteryProtectionUtil.setChargingEnabled(true);
+             mChargeDisabled = false;
++            return;  // No need to re-evaluate, we did want to enable the charge
++        }
++
++        // Samsung's firmware simply ignore the charge status and just let the phone charges.
++        // Simply telling it to disable it again fixes it.
++        if (mChargeDisabled && mHealthInfo.batteryStatus == BatteryManager.BATTERY_STATUS_CHARGING) {
++            BatteryProtectionUtil.setChargingEnabled(false);
+         }
      }
  
