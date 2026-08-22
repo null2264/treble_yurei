@@ -1,6 +1,6 @@
 #!/bin/sh
 
-readonly DEBUG="true"
+readonly DEBUG="false"
 
 readonly signing_keys=(
     bluetooth
