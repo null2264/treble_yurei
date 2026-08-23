@@ -21,7 +21,7 @@ rm -fv "${OUT}/signed-target_files.zip"
 mv -v "${OUT}/system.img" "$WD/system.img"
 
 TAG="${ANDROID_VERSION}-gos${GRAPHENEOS_TAG}"
-img="RestlessOS-arm64-ab-${TAG}.img"
+img="Yurei-arm64-ab-${TAG}.img"
 cd $WD
 mv -v system.img "${img}"
 xz --best --compress --memlimit-compress=0 --threads=0 -v "${img}"
