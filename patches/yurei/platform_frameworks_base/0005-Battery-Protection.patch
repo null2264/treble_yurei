@@ -1,7 +1,7 @@
 From 8a4280d0c91e4373a8f7f968026b7d47a8334e4f Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 7 Aug 2026 17:02:05 +0700
-Subject: [PATCH 1/9] feat: Battery Protect
+Subject: [PATCH 01/10] feat: Battery Protect
 
 Only works on Samsung since it uses Samsung's node
 ---
@@ -140,7 +140,7 @@ index e6dec70b52eb3..33b93dd49bfe7 100644
 From b3c4b6edf7f9ac0b1f5ab580f8d3d0928477725a Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 7 Aug 2026 17:08:24 +0700
-Subject: [PATCH 2/9] fix: Clean up when charger is unplugged
+Subject: [PATCH 02/10] fix: Clean up when charger is unplugged
 
 ---
  services/core/java/com/android/server/BatteryService.java | 6 +++++-
@@ -172,7 +172,7 @@ index 33b93dd49bfe7..dab3c6dafe41e 100644
 From 16fad671cd467bb2d59c74368376aa243d7d65ec Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Fri, 7 Aug 2026 17:09:46 +0700
-Subject: [PATCH 3/9] fix: Missing stuff
+Subject: [PATCH 03/10] fix: Missing stuff
 
 ---
  .../java/com/android/server/BatteryProtectionUtil.java     | 7 +++++++
@@ -211,7 +211,7 @@ index dab3c6dafe41e..a8da703163ff1 100644
 From 22df548c816985841e92aa2972d3ff90796ebac8 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 16:35:00 +0700
-Subject: [PATCH 4/9] fix: Fix infinite loop
+Subject: [PATCH 04/10] fix: Fix infinite loop
 
 ---
  .../java/com/android/server/BatteryService.java   | 15 ++++++++++++---
@@ -270,7 +270,7 @@ index a8da703163ff1..73493b2c6c8b3 100644
 From 6ab2cd707a83d10864f368c61b646937657f3e54 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 16:52:58 +0700
-Subject: [PATCH 5/9] refactor: Reduce IO usage
+Subject: [PATCH 05/10] refactor: Reduce IO usage
 
 ---
  .../android/server/BatteryProtectionUtil.java    | 16 ++++++++++++----
@@ -318,7 +318,7 @@ index 48d9db0be5c73..6a7bff0d44b73 100644
 From b92c5ce01c728a39d4080e977e40f02bfb273f50 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 16:53:49 +0700
-Subject: [PATCH 6/9] refactor: Clean up code and add some sanity checks
+Subject: [PATCH 06/10] refactor: Clean up code and add some sanity checks
 
 ---
  .../com/android/server/BatteryService.java    | 25 +++++++++----------
@@ -370,7 +370,7 @@ index 73493b2c6c8b3..51e38f4e79fdf 100644
 From 179a990ce7adde6f2177e062c320cf25c187e5ce Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 16:57:59 +0700
-Subject: [PATCH 7/9] fix: Check the wrong variable
+Subject: [PATCH 07/10] fix: Check the wrong variable
 
 ---
  .../core/java/com/android/server/BatteryProtectionUtil.java     | 2 +-
@@ -393,7 +393,7 @@ index 6a7bff0d44b73..9da6d5477538c 100644
 From cb9cbcd0a25c4676a5b2c63b04f9aa59630b8089 Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Sun, 16 Aug 2026 17:02:46 +0700
-Subject: [PATCH 8/9] fix: System -> Global
+Subject: [PATCH 08/10] fix: System -> Global
 
 ---
  services/core/java/com/android/server/BatteryService.java | 4 ++--
@@ -425,7 +425,7 @@ index 51e38f4e79fdf..108888dc84e3b 100644
 From bc62707783bb6b72a9e6aff051d9883dcd736afe Mon Sep 17 00:00:00 2001
 From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
 Date: Tue, 18 Aug 2026 15:51:43 +0700
-Subject: [PATCH 9/9] fix: Realign charge state
+Subject: [PATCH 09/10] fix: Realign charge state
 
 ---
  services/core/java/com/android/server/BatteryService.java | 7 +++++++
@@ -449,3 +449,83 @@ index 108888dc84e3b..d7671afac86c7 100644
          }
      }
  
+
+From 5919398deb3321ac24755bc109193cc0aa29e074 Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Sun, 23 Aug 2026 20:35:02 +0700
+Subject: [PATCH 10/10] feat: Adjustable max battery level
+
+---
+ .../com/android/server/BatteryService.java    | 22 +++++++++++++++++--
+ 1 file changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/BatteryService.java b/services/core/java/com/android/server/BatteryService.java
+index d7671afac86c7..5f5633a8af216 100644
+--- a/services/core/java/com/android/server/BatteryService.java
++++ b/services/core/java/com/android/server/BatteryService.java
+@@ -23,6 +23,7 @@
+ import static com.android.server.health.Utils.copyV1Battery;
+ 
+ import static java.lang.Math.abs;
++import static java.lang.Math.max;
+ 
+ import android.annotation.NonNull;
+ import android.annotation.Nullable;
+@@ -285,6 +286,7 @@ public final class BatteryService extends SystemService {
+     private int mShutdownBatteryTemperature;
+     private boolean mShutdownIfNoPower;
+     private boolean mBatteryProtect;
++    private boolean mBatteryMaxLevel;
+     private boolean mChargeDisabled;
+ 
+     private static String sSystemUiPackage;
+@@ -464,6 +466,7 @@ public BatteryService(Context context, @NonNull Looper looper) {
+         sSystemUiPackage = mContext.getResources().getString(
+                 com.android.internal.R.string.config_systemUi);
+         mBatteryProtect = false;
++        mBatteryMaxLevel = 80;
+         mChargeDisabled = false;
+ 
+         mBatteryLevelsEventQueue = new ArrayDeque<>();
+@@ -526,6 +529,9 @@ public void onChange(boolean selfChange) {
+                 resolver.registerContentObserver(Settings.Global.getUriFor(
+                         "yurei_battery_protect"),
+                         false, obsProtection, UserHandle.USER_ALL);
++                resolver.registerContentObserver(Settings.Global.getUriFor(
++                        "yurei_battery_protect_max"),
++                        false, obsProtection, UserHandle.USER_ALL);
+                 resolver.registerContentObserver(Settings.Global.getUriFor(
+                         Settings.Global.LOW_POWER_MODE_TRIGGER_LEVEL),
+                         false, obs, UserHandle.USER_ALL);
+@@ -538,6 +544,18 @@ public void onChange(boolean selfChange) {
+     private void updateBatteryProtect() {
+         mBatteryProtect = Settings.Global.getInt(
+             mContext.getContentResolver(), "yurei_battery_protect", 0) == 1;
++        mBatteryMaxLevel = Settings.Global.getInt(
++            mContext.getContentResolver(), "yurei_battery_protect_max", 80);
++        // Normalize max battery level
++        if (mBatteryMaxLevel > 100) {
++            // Battery level is a percentage, the max is obviously 100%
++            mBatteryMaxLevel = 100;
++        } else if (mBatteryMaxLevel < 50) {
++            // Recommended battery levels:
++            // - 80% for day-to-day usage
++            // - 50-60% for Long-term storing
++            mBatteryMaxLevel = 50;
++        }
+     }
+ 
+     private void registerHealthCallback() {
+@@ -1648,10 +1666,10 @@ private void processBatteryProtectLocked() {
+             return;
+         }
+ 
+-        if (mHealthInfo.batteryLevel >= 80 && !mChargeDisabled) {
++        if (mHealthInfo.batteryLevel >= mBatteryMaxLevel && !mChargeDisabled) {
+             BatteryProtectionUtil.setChargingEnabled(false);
+             mChargeDisabled = true;
+-        } else if (mHealthInfo.batteryLevel <= 75 && mChargeDisabled) {
++        } else if (mHealthInfo.batteryLevel <= (mBatteryMaxLevel - 5) && mChargeDisabled) {
+             BatteryProtectionUtil.setChargingEnabled(true);
+             mChargeDisabled = false;
+             return;  // No need to re-evaluate, we did want to enable the charge
