@@ -14,13 +14,31 @@ TAG=$(curl -fsS "https://grapheneos.org/releases" \
 
 mkdir -p build/src
 cd build/src
-repo init --depth=1 --git-lfs \
-    --manifest-branch "refs/tags/2026061600" \
-    --manifest-url https://github.com/GrapheneOS/platform_manifest.git
-mkdir -p .repo/local_manifests
-cp -v $WD/configs/manifests/*.xml .repo/local_manifests/
 
-repo sync --force-sync --jobs=4 --no-clone-bundle --no-tags || exit 1  # Probably haven't generated a password from 'https://android.googlesource.com/'
+if [ -d "$WD/build/src" ];
+	repo init --depth=1 --git-lfs \
+		--manifest-branch "refs/tags/2026061600" \
+		--manifest-url https://github.com/GrapheneOS/platform_manifest.git || {
+		cd $WD
+		rm -rf build/src
+		exit 1
+	}
+	mkdir -p .repo/local_manifests
+	cp -v $WD/configs/manifests/*.xml .repo/local_manifests/
+
+	repo sync --force-sync --jobs=4 --no-clone-bundle --no-tags || {
+		cd $WD
+		rm -rf build/src
+		exit 1  # Probably haven't generated a password from 'https://android.googlesource.com/'
+	}
+then
+	repo forall -c '
+		git am --abort 2>/dev/null || true
+		base="$(git rev-list --max-parents=0 HEAD | tail -1)"
+		git reset --hard "$base" >/dev/null
+		git clean -fdx >/dev/null
+	'
+fi
 
 for tier in trebledroid trebledroid-staging rom personal yurei; do
     $WD/patches/apply.sh . "${tier}"
