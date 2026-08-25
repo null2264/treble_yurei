@@ -142,6 +142,7 @@ mv -v "${OUT}/system.img" "$WD/system.img"
 TAG="${ANDROID_VERSION}-gos${GRAPHENEOS_TAG}"
 img="Yurei-arm64-ab-${TAG}.img"
 cd $WD
+rm -fv "${img}"
 mv -v system.img "${img}"
 
 echo "==> Compressing signed image..."
