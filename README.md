@@ -15,8 +15,8 @@ connected to the GrapheneOS project or its developers.
 - Show brightness slider on QuickQuickSettings
 - Move brightness slider to the bottom of QuickSettings (right above media control)
 - Double tap to sleep
-- ~~Long~~ left edge gesture to open volume panel
-- Battery charge limiter with configurable node through overlay
+- ~~Long~~ left edge gesture to open volume panel (functional, but buggy)
+- (Experimental) Battery charge limiter with configurable node through overlay
   Samsung's node: ` /sys/class/power_supply/battery/batt_slate_mode`
 
 ### Planned
