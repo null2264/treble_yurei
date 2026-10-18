@@ -1,0 +1,187 @@
+name: Build RestlessOS GSI via BuildBuddy RBE
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Type of build'
+        required: true
+        default: 'userdebug'
+        type: choice
+        options: 
+        - 'eng'
+        - 'userdebug'
+        - 'user'
+      missing:
+        description: 'Allow missing dependencies'
+        type: boolean
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ROM
+    runs-on: ubuntu-24.04
+    steps:
+        - name: "Checkout"
+          uses: actions/checkout@v6
+
+        - name: "Set up environment variables"
+          run: |
+            echo "ALLOW_MISSING_DEPENDENCIES=${{ github.event.inputs.missing }}" >> "$GITHUB_ENV"
+            echo "BUILD_USERNAME=${{ github.actor }}" >> "$GITHUB_ENV"
+            echo "BUILD_HOSTNAME=ADROD" >> "$GITHUB_ENV"
+            echo "GRAPHENEOS_TAG=2026061600" >> "$GITHUB_ENV"
+
+        - name: "Free disk space"
+          uses: rokibhasansagar/slimhub_actions@main
+
+        - name: "Set up dependencies"
+          run: |
+            wget https://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2_amd64.deb && sudo dpkg -i libtinfo5_6.3-2_amd64.deb && rm -f libtinfo5_6.3-2_amd64.deb
+            wget https://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.3-2_amd64.deb && sudo dpkg -i libncurses5_6.3-2_amd64.deb && rm -f libncurses5_6.3-2_amd64.deb
+            DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
+              bc g++-multilib gcc-multilib gperf imagemagick protobuf-compiler python3-protobuf lib32readline-dev lib32z1-dev libdw-dev libelf-dev libyaml-dev \
+              libgnutls28-dev libsdl1.2-dev libssl-dev libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc linux-modules-extra-$(uname -r)
+
+        - name: "Set up zram"
+          run: |
+            sudo modprobe zram
+            totalmem=$(LC_ALL=C free | grep -e "^Mem:" | sed -e 's/^Mem: *//' -e 's/  *.*//')
+            mem=$((totalmem * 4 * 1024))
+            sleep 1
+            sudo zramctl /dev/zram0 -s $mem -a zstd
+            sudo mkswap /dev/zram0
+            sudo swapon -p 100 /dev/zram0
+            sudo sysctl vm.swappiness=200
+
+        - name: "Set up adrod repo"
+          run: |
+            WD=$PWD
+
+            mkdir -p ~/bin
+            mkdir ./adrodsrc
+            curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+            chmod a+x ~/bin/repo
+            export PATH="$HOME/bin:$PATH"
+
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            sudo modprobe btrfs
+
+            IMG_SIZE="$(($(df -k --output=avail "$GITHUB_WORKSPACE" | tail -n 1) - 1024000))"
+            truncate -s ${IMG_SIZE}K adrod.img
+            mkfs.btrfs adrod.img
+            sudo mount adrod.img ./adrodsrc -o defaults,noatime,compress-force=zstd,space_cache=v2,commit=120
+            sudo chown "$(id -un):$(id -gn)" ./adrodsrc
+
+            cd ./adrodsrc
+
+            repo init --depth=1 --git-lfs --no-clone-bundle \
+              --manifest-branch "refs/tags/$GRAPHENEOS_TAG" \
+              --manifest-url https://github.com/GrapheneOS/platform_manifest.git
+
+            [ -d "$PWD/.repo/local_manifests" ] || mkdir -p .repo/local_manifests
+            cp -v $WD/configs/manifests/*.xml .repo/local_manifests/
+
+            git clone --depth=1 https://github.com/7jari/new_rbe_fix rbefix
+            cp rbefix/manifests/legacy-rbe.xml .repo/local_manifests/rbe.xml
+
+            for tier in trebledroid trebledroid-staging rom personal yurei; do
+              $WD/patches/apply.sh . "${tier}"
+            done
+
+            if [ "${{ github.event.inputs.build_type }}" = "userdebug" ]; then
+              $WD/patches/apply.sh . debug-builds
+            else
+              $WD/patches/apply.sh . release-builds
+            fi
+
+            repo sync -c -j8
+
+        - name: "Display remaining disk space"
+          run: |
+            df -h "$GITHUB_WORKSPACE/adrodsrc"
+
+        - name: "Build ROM"
+          timeout-minutes: 330
+          run: |
+            WD=$PWD
+
+            cd ./adrodsrc
+
+            bash rbefix/scripts/build_patched_reclient.sh ./
+            if grep -q "582efb38f0c229ea39952fff9e132ccbe183e14869b39888010dacf56b360d62" build/make/rbesetup.sh; then
+            patch -p1 < rbefix/patches/legacy-rbe-buildbuddyfix-defaults.patch
+            else
+            patch -p1 < rbefix/patches/android-rbe-buildbuddyfix-defaults.patch
+            fi
+
+            ##region: RBE environment variables
+            export USE_RBE=true
+            export NINJA_REMOTE_NUM_JOBS=40
+            export RBE_use_unified_downloads=true
+            export RBE_use_unified_uploads=true
+            export RBE_R8_EXEC_STRATEGY=remote_local_fallback
+            export RBE_D8_EXEC_STRATEGY=remote_local_fallback
+            export RBE_JAVAC_EXEC_STRATEGY=remote_local_fallback
+            export RBE_JAR_EXEC_STRATEGY=remote_local_fallback
+            export RBE_ZIP_EXEC_STRATEGY=remote_local_fallback
+            export RBE_TURBINE_EXEC_STRATEGY=remote_local_fallback
+            export RBE_SIGNAPK_EXEC_STRATEGY=remote_local_fallback
+            export RBE_CXX_EXEC_STRATEGY=remote_local_fallback
+            export RBE_CXX_LINKS_EXEC_STRATEGY=remote_local_fallback
+            export RBE_ABI_LINKER_EXEC_STRATEGY=remote_local_fallback
+            export RBE_CLANG_TIDY_EXEC_STRATEGY=remote_local_fallback
+            export RBE_METALAVA_EXEC_STRATEGY=remote_local_fallback
+            export RBE_LINT_EXEC_STRATEGY=remote_local_fallback
+            export RBE_R8=1
+            export RBE_D8=1
+            export RBE_JAVAC=1
+            export RBE_JAR=1
+            export RBE_ZIP=1
+            export RBE_TURBINE=1
+            export RBE_SIGNAPK=1
+            export RBE_CXX_LINKS=1
+            export RBE_CXX=1
+            export RBE_ABI_LINKER=1
+            export RBE_CLANG_TIDY=1
+            export RBE_METALAVA=1
+            export RBE_LINT=1
+            export RBE_JAVA_POOL=default
+            export RBE_METALAVA_POOL=default
+            export RBE_LINT_POOL=default
+            export RBE_reclient_timeout=60m
+            export RBE_exec_timeout=10m
+            export RBE_service="remote.buildbuddy.io:443"
+            export RBE_remote_headers="x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}"
+            export RBE_use_rpc_credentials=false
+            export RBE_service_no_auth=true
+            ##endregion
+            source build/envsetup.sh
+
+            AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
+            ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
+            ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed 's/.*"\([^"]*\)".*/\1/')
+
+            lunch treble_arm64_bvN-${ANDROID_VERSION_TAG}-${{ github.event.inputs.build_type }}
+
+            make target-files-package otatools -j"$(nproc --all)"
+            #${{ github.event.inputs.build_command }}
+
+            TARGET_FILES=$(ls $OUT/obj/PACKAGING/target_files_intermediates/treble_arm64_bvN-target_files.zip | head -n 1)
+            unzip -j -q "$TARGET_FILES" IMAGES/system.img -d ./
+
+        - name: "Upload to GitHub Artifacts"
+          if: ${{ github.event.inputs.artifact == 'true' }}
+          uses: actions/upload-artifact@v7
+          with:
+            name: "${{ github.event.inputs.product_name }}-${{github.run_id}}-artifacts"
+            path: adrodsrc/system.img
