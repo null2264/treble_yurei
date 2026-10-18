@@ -106,7 +106,6 @@ jobs:
               $WD/patches/apply.sh . release-builds
             fi
 
-
         - name: "Display remaining disk space"
           run: |
             df -h "$GITHUB_WORKSPACE/adrodsrc"
@@ -118,6 +117,14 @@ jobs:
 
             cd ./adrodsrc
 
+            ##region Setup GSI product makefile
+            prevWD=$PWD
+            cd device/phh/treble
+                cp -fv $WD/configs/rom/rom.mk .
+                bash generate.sh rom
+            cd $prevWD
+            ##endregion
+
             bash rbefix/scripts/build_patched_reclient.sh ./
             if grep -q "582efb38f0c229ea39952fff9e132ccbe183e14869b39888010dacf56b360d62" build/make/rbesetup.sh; then
             patch -p1 < rbefix/patches/legacy-rbe-buildbuddyfix-defaults.patch
@@ -125,7 +132,7 @@ jobs:
             patch -p1 < rbefix/patches/android-rbe-buildbuddyfix-defaults.patch
             fi
 
-            ##region: RBE environment variables
+            ##region RBE environment variables
             export USE_RBE=true
             export NINJA_REMOTE_NUM_JOBS=40
             export RBE_use_unified_downloads=true
