@@ -201,7 +201,6 @@ jobs:
             unzip -j -q "$TARGET_FILES" IMAGES/system.img -d ./
 
         - name: "Upload to GitHub Artifacts"
-          if: ${{ github.event.inputs.artifact == 'true' }}
           uses: actions/upload-artifact@v7
           with:
             name: "system-img"
