@@ -41,6 +41,8 @@ jobs:
 
         - name: "Free disk space"
           uses: rokibhasansagar/slimhub_actions@main
+          with:
+            retain: "android_sdk"
 
         - name: "Set up dependencies"
           run: |
@@ -55,11 +57,6 @@ jobs:
           with:
             java: '17'
             distro: 'temurin'
-
-        - name: "Setup Android SDK"
-          uses: android-actions/setup-android@v4
-          with:
-            packages: 'platforms;android-34;build-tools;34.0.0'
 
         - name: "Set up zram"
           run: |
