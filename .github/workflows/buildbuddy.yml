@@ -94,6 +94,8 @@ jobs:
             git clone --depth=1 https://github.com/7jari/new_rbe_fix rbefix
             cp rbefix/manifests/legacy-rbe.xml .repo/local_manifests/rbe.xml
 
+            repo sync -c -j8 --force-sync --no-clone-bundle --no-tags
+
             for tier in trebledroid trebledroid-staging rom personal yurei; do
               $WD/patches/apply.sh . "${tier}"
             done
@@ -104,7 +106,6 @@ jobs:
               $WD/patches/apply.sh . release-builds
             fi
 
-            repo sync -c -j8
 
         - name: "Display remaining disk space"
           run: |
