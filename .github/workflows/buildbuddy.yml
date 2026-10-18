@@ -207,5 +207,5 @@ jobs:
           if: ${{ github.event.inputs.artifact == 'true' }}
           uses: actions/upload-artifact@v7
           with:
-            name: "${{ github.event.inputs.product_name }}-${{github.run_id}}-artifacts"
+            name: "system-img"
             path: adrodsrc/system.img
