@@ -117,6 +117,11 @@ jobs:
 
             cd ./adrodsrc
 
+            prevWD=$PWD
+            cd treble_app
+            bash build.sh release
+            cd $prevWD
+
             ##region Setup GSI product makefile
             prevWD=$PWD
             cd device/phh/treble
