@@ -41,8 +41,6 @@ jobs:
 
         - name: "Free disk space"
           uses: rokibhasansagar/slimhub_actions@main
-          with:
-            retain: "android_sdk,java_tools"
 
         - name: "Set up dependencies"
           run: |
@@ -51,6 +49,17 @@ jobs:
             DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
               bc g++-multilib gcc-multilib gperf imagemagick protobuf-compiler python3-protobuf lib32readline-dev lib32z1-dev libdw-dev libelf-dev libyaml-dev \
               libgnutls28-dev libsdl1.2-dev libssl-dev libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc linux-modules-extra-$(uname -r)
+
+        - name: "Setup Java for Treble App"
+          uses: null2264/actions/gradle-java-setup@240857a3fa6e2667311da86417c637d4f59e8d75
+          with:
+            java: '17'
+            distro: 'temurin'
+
+        - name: "Setup Android SDK"
+          uses: android-actions/setup-android@v4
+          with:
+            packages: 'platforms;android-34;build-tools;34.0.0'
 
         - name: "Set up zram"
           run: |
