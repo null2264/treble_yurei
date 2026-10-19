@@ -13,7 +13,7 @@
 
   <!-- device: board support -->
   <remove-project name="device/generic/art" />
-  <remove-project name="device/generic/car" />
+  <remove-project name="LineageOS/android_device_generic_car" />
   <remove-project name="device/generic/trusty" />
   <remove-project name="device/generic/x86" />
   <remove-project name="device/generic/x86_64" />
