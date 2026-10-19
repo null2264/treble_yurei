@@ -205,3 +205,24 @@ jobs:
           with:
             name: "system-img"
             path: adrodsrc/system.img
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Download artifacts"
+        uses: actions/download-artifact@v8
+        with:
+          name: system-img
+          path: adrodout
+
+      - name: "Create release (drafted)"
+        uses: softprops/action-gh-release@v3.0.3
+        with:
+          files: adrodout/*
+          tag_name: "Yuurei b${{github.run_id}}"
+          draft: true
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
