@@ -186,7 +186,8 @@ jobs:
             export RBE_use_rpc_credentials=false
             export RBE_service_no_auth=true
             ##endregion
-            source build/envsetup.sh
+
+            . b*/e*
 
             AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
             ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
