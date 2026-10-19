@@ -37,7 +37,7 @@ jobs:
             echo "ALLOW_MISSING_DEPENDENCIES=${{ github.event.inputs.missing }}" >> "$GITHUB_ENV"
             echo "BUILD_USERNAME=${{ github.actor }}" >> "$GITHUB_ENV"
             echo "BUILD_HOSTNAME=ADROD" >> "$GITHUB_ENV"
-            echo "GRAPHENEOS_TAG=2026061600" >> "$GITHUB_ENV"
+            echo "LINEAGE_VERSION=lineage-23.2" >> "$GITHUB_ENV"
 
         - name: "Free disk space"
           uses: rokibhasansagar/slimhub_actions@main
@@ -93,8 +93,8 @@ jobs:
             cd ./adrodsrc
 
             repo init --depth=1 --git-lfs --no-clone-bundle \
-              --manifest-branch "refs/tags/$GRAPHENEOS_TAG" \
-              --manifest-url https://github.com/GrapheneOS/platform_manifest.git
+              --manifest-branch $LINEAGE_VERSION \
+              --manifest-url https://github.com/AxionAOSP/android.git
 
             [ -d "$PWD/.repo/local_manifests" ] || mkdir -p .repo/local_manifests
             cp -v $WD/configs/manifests/*.xml .repo/local_manifests/
