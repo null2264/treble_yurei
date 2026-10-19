@@ -23,7 +23,7 @@
   <remove-project name="device/google/cuttlefish_vmm" />
 
   <!-- hardware: device-specific -->
-  <!-- <remove-project name="LineageOS/android_hardware_samsung_nfc" /> -->
+  <remove-project name="android_hardware_samsung_nfc" />
   <remove-project name="platform/hardware/st/secure_element" />
   <remove-project name="platform/hardware/st/secure_element2" />
   <remove-project name="platform/hardware/ti/am57x" />
