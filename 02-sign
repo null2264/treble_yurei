@@ -18,8 +18,6 @@ ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textpr
 
 lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${V}"
 
-TARGET_FILES=$(ls $OUT/obj/PACKAGING/target_files_intermediates/treble_arm64_bvN-target_files.zip | head -n 1)
-
 echo "==> Resigning target files using keys from $KEY_DIR..."
 
 AVB_PKMD="$KEY_DIR/avb_pkmd.bin"
@@ -130,7 +128,8 @@ sign_target_files_apks -o -d "$KEY_DIR" --avb_vbmeta_key "$KEY_DIR/avb.pem" --av
     --extra_apex_payload_key com.android.wifi.apex="$KEY_DIR/avb.pem" \
     --extra_apks com.google.pixel.camera.hal.apex="$KEY_DIR/releasekey" \
     --extra_apex_payload_key com.google.pixel.camera.hal.apex="$KEY_DIR/avb.pem" \
-    $TARGET_FILES ${OUT}/signed-target_files.zip
+    "${OUT}"/obj/PACKAGING/target_files_intermediates/*-target_files*.zip \
+    "${OUT}"/signed-target_files.zip
 
 echo "==> Extracting signed system.img..."
 rm -fv "${OUT}/system.img"
