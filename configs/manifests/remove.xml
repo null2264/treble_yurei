@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <!-- automotive -->
-  <remove-project name="packages/apps/Car/CalendarPrebuilt" />
-  <remove-project name="packages/apps/Car/DataSubscriptionReference" />
-  <remove-project name="packages/apps/Car/DebuggingRestrictionController" />
-  <remove-project name="packages/apps/Car/DriverUIPrebuilt" />
-  <remove-project name="packages/apps/Car/LinkViewer" />
-  <remove-project name="packages/apps/Car/References" />
-  <remove-project name="packages/apps/Car/RotaryImePrebuilt" />
-  <remove-project name="packages/apps/Car/Templates" />
-  <remove-project name="packages/apps/Car/VoiceControl" />
+  <remove-project name="platform/packages/apps/Car/CalendarPrebuilt" />
+  <remove-project name="platform/packages/apps/Car/DataSubscriptionReference" />
+  <remove-project name="platform/packages/apps/Car/DebuggingRestrictionController" />
+  <remove-project name="platform/packages/apps/Car/DriverUIPrebuilt" />
+  <remove-project name="platform/packages/apps/Car/LinkViewer" />
+  <remove-project name="LineageOS/android_packages_apps_Car_References" />
+  <remove-project name="platform/packages/apps/Car/RotaryImePrebuilt" />
+  <remove-project name="platform/packages/apps/Car/Templates" />
+  <remove-project name="platform/packages/apps/Car/VoiceControl" />
 
   <!-- device: board support -->
   <remove-project name="device/generic/art" />
@@ -23,25 +23,25 @@
   <remove-project name="device/google/cuttlefish_vmm" />
 
   <!-- hardware: device-specific -->
-  <remove-project name="hardware/samsung/nfc" />
-  <remove-project name="hardware/st/secure_element" />
-  <remove-project name="hardware/st/secure_element2" />
-  <remove-project name="hardware/ti/am57x" />
+  <remove-project name="LineageOS/android_hardware_samsung_nfc" />
+  <remove-project name="platform/hardware/st/secure_element" />
+  <remove-project name="platform/hardware/st/secure_element2" />
+  <remove-project name="platform/hardware/ti/am57x" />
 
   <!-- tests -->
   <remove-project name="kernel/tests" />
-  <remove-project name="test/catbox" />
-  <remove-project name="test/cts-root" />
-  <remove-project name="test/dittosuite" />
-  <remove-project name="test/graphics" />
-  <remove-project name="test/mts" />
-  <remove-project name="test/vts-testcase/nbu" />
-  <remove-project name="test/vts-testcase/performance" />
-  <remove-project name="test/vts-testcase/security" />
-  <remove-project name="tools/test/connectivity" />
-  <remove-project name="tools/test/mobly_snippets" />
-  <remove-project name="tools/test/openhst" />
+  <remove-project name="platform/test/catbox" />
+  <remove-project name="platform/test/cts-root" />
+  <remove-project name="platform/test/dittosuite" />
+  <remove-project name="platform/test/graphics" />
+  <remove-project name="platform/test/mts" />
+  <remove-project name="platform/test/vts-testcase/nbu" />
+  <remove-project name="platform/test/vts-testcase/performance" />
+  <remove-project name="platform/test/vts-testcase/security" />
+  <remove-project name="platform/tools/test/connectivity" />
+  <remove-project name="platform/tools/test/mobly_snippets" />
+  <remove-project name="platform/tools/test/openhst" />
 
   <!-- tv -->
-  <remove-project name="packages/apps/TvFeedbackConsent" />
+  <remove-project name="platform/packages/apps/TvFeedbackConsent" />
 </manifest>
