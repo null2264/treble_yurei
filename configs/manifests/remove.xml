@@ -17,7 +17,7 @@
   <remove-project name="device/generic/trusty" />
   <remove-project name="device/generic/x86" />
   <remove-project name="device/generic/x86_64" />
-  <remove-project name="device/google_car" />
+  <remove-project name="LineageOS/android_device_google_car" />
 
   <!-- device: cuttlefish virtual device -->
   <remove-project name="device/google/cuttlefish_vmm" />
