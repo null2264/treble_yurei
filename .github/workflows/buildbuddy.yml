@@ -196,6 +196,9 @@ jobs:
             ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
             ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed 's/.*"\([^"]*\)".*/\1/')
 
+            ls -l
+            ls -l build
+            echo $ANDROID_KEY_PATH
             gk -s
             axion treble_arm64_bvN-${ANDROID_VERSION_TAG} ${{ github.event.inputs.build_type }} va
 
