@@ -193,10 +193,6 @@ jobs:
             mkdir -p vendor/lineage-priv/keys  # for the love of god, stop trying to create keys too early
             . b*/e*
 
-            AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
-            ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
-            ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed 's/.*"\([^"]*\)".*/\1/')
-
             echo "Umm... [1]"
             ls -l
             echo "Umm... [2]"
@@ -206,7 +202,7 @@ jobs:
             echo "Umm... [4]"
             gk -s
             echo "Umm... [5]"
-            axion treble_arm64_bvN-${ANDROID_VERSION_TAG} ${{ github.event.inputs.build_type }} vanilla
+            axion treble_arm64_bvN ${{ github.event.inputs.build_type }} vanilla
 
             make target-files-package otatools -j"$(nproc --all)"
             #${{ github.event.inputs.build_command }}
