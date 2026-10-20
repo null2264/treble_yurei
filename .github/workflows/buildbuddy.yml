@@ -190,7 +190,8 @@ jobs:
             export RBE_use_rpc_credentials=false
             export RBE_service_no_auth=true
             ##endregion
-            . b*/e* || . b*/e* || echo "wtf man"
+            mkdir -p vendor/lineage-priv/keys  # for the love of god, stop trying to create keys too early
+            . b*/e*
 
             AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
             ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
