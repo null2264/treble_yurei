@@ -142,6 +142,7 @@ jobs:
           with:
             repository: "vendor_lineage-priv"
             path: "adrodsrc/vendor/lineage-priv"
+            token: ${{ secrets.GH_PAT }}
 
         - name: "Build ROM"
           timeout-minutes: 330
