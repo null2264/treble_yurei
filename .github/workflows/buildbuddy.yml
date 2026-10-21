@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
         - name: "Checkout"
-          uses: actions/checkout@v6
+          uses: actions/checkout@v7
 
         - name: "Set up environment variables"
           run: |
@@ -137,6 +137,12 @@ jobs:
           run: |
             df -h "$GITHUB_WORKSPACE/adrodsrc"
 
+        - name: "Fetch signing keys"
+          uses: actions/checkout@v7
+          with:
+            repository: "vendor_lineage-priv"
+            path: "adrodsrc/vendor/lineage-priv"
+
         - name: "Build ROM"
           timeout-minutes: 330
           run: |
@@ -205,7 +211,6 @@ jobs:
             export RBE_use_rpc_credentials=false
             export RBE_service_no_auth=true
             ##endregion
-            git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${BUILD_USERNAME}/vendor_lineage-priv vendor/lineage-priv
             sed -i '/^ax_help$/d; /^generate_host_overrides$/d' build/envsetup.sh
             sed -i 's/"$mode" == "-f"/"$mode" = "-f"/g' build/envsetup.sh
             . build/envsetup.sh
