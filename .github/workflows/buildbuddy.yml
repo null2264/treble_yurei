@@ -56,6 +56,8 @@ jobs:
               bc g++-multilib gcc-multilib gperf imagemagick protobuf-compiler python3-protobuf lib32readline-dev lib32z1-dev libdw-dev libelf-dev libyaml-dev \
               libgnutls28-dev libsdl1.2-dev libssl-dev libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc linux-modules-$(uname -r)
 
+            DEBIAN_FRONTEND=noninteractive sudo apt install -yq linux-modules-extra-$(uname -r) || true  # It's a gacha whether we gonna get Linux 6 or Linux 7
+
         - name: "Setup Java for Treble App"
           uses: null2264/actions/gradle-java-setup@240857a3fa6e2667311da86417c637d4f59e8d75
           with:
