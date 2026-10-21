@@ -205,23 +205,15 @@ jobs:
             export RBE_use_rpc_credentials=false
             export RBE_service_no_auth=true
             ##endregion
-            mkdir -p vendor/lineage-priv/keys  # for the love of god, stop trying to create keys too early
+            git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com/${BUILD_USERNAME}/vendor_lineage-priv vendor/lineage-priv
             sed -i '/^ax_help$/d; /^generate_host_overrides$/d' build/envsetup.sh
             sed -i 's/"$mode" == "-f"/"$mode" = "-f"/g' build/envsetup.sh
             . build/envsetup.sh
 
-            echo "Umm... [1]"
-            ls -l
-            echo "Umm... [2]"
-            ls -l build
-            echo "Umm... [3]"
-            echo $ANDROID_KEY_PATH
-            echo "Umm... [4]"
-            gk -s
-            echo "Umm... [5]"
             axion treble_arm64_bvN ${{ github.event.inputs.build_type }} vanilla
 
-            make target-files-package otatools -j"$(nproc --all)"
+            ax -br -j"$(nproc --all)"
+            # make target-files-package otatools -j"$(nproc --all)"
             #${{ github.event.inputs.build_command }}
 
             TARGET_FILES=$(ls $OUT/obj/PACKAGING/target_files_intermediates/treble_arm64_bvN-target_files.zip | head -n 1)
