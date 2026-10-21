@@ -73,6 +73,19 @@ jobs:
             sudo swapon -p 100 /dev/zram0
             sudo sysctl vm.swappiness=200
 
+        - name: "Set up auth for googlesource.com"
+          run: |
+            eval 'set +o history' 2>/dev/null || setopt HIST_IGNORE_SPACE 2>/dev/null
+             touch ~/.gitcookies
+             chmod 0600 ~/.gitcookies
+
+             git config --global http.cookiefile ~/.gitcookies
+
+             tr , \\t <<\__END__ >>~/.gitcookies
+            ${{ secrets.GOOGLE_SOURCES_COOKIES}}
+            __END__
+            eval 'set -o history' 2>/dev/null || unsetopt HIST_IGNORE_SPACE 2>/dev/null
+
         - name: "Set up adrod repo"
           run: |
             WD=$PWD
