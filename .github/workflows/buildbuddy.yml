@@ -140,7 +140,7 @@ jobs:
         - name: "Fetch signing keys"
           uses: actions/checkout@v7
           with:
-            repository: "vendor_lineage-priv"
+            repository: "null2264/vendor_lineage-priv"
             path: "adrodsrc/vendor/lineage-priv"
             token: ${{ secrets.GH_PAT }}
 
