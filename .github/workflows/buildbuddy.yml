@@ -160,6 +160,8 @@ jobs:
             prevWD=$PWD
             cd device/phh/treble
                 cp -fv $WD/configs/rom/rom.mk .
+                # Since for some reason Axion append 'lineage_' to their target makefile name
+                sed -i 's/target="treble_/target="lineage_treble_/g' generate.sh
                 bash generate.sh rom
             cd $prevWD
             ##endregion

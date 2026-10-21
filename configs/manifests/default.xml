@@ -10,7 +10,7 @@
   <remote name="null2264" fetch="https://github.com/null2264/" />
 
   <!-- trebledroid: device -->
-  <project path="device/phh/treble" name="device_phh_treble" remote="trebledroid" revision="android-16.0" clone-depth="1" />
+  <project path="device/phh/treble" name="android_device_phh_treble" remote="null2264" revision="android-16.0" clone-depth="1" />
 
   <!-- andycgyan: qcrilam -->
   <project path="packages/apps/QcRilAm" name="android_packages_apps_QcRilAm" remote="andycgyan" revision="master" clone-depth="1" />
