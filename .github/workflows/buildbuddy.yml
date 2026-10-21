@@ -54,7 +54,7 @@ jobs:
             wget https://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.3-2_amd64.deb && sudo dpkg -i libncurses5_6.3-2_amd64.deb && rm -f libncurses5_6.3-2_amd64.deb
             DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
               bc g++-multilib gcc-multilib gperf imagemagick protobuf-compiler python3-protobuf lib32readline-dev lib32z1-dev libdw-dev libelf-dev libyaml-dev \
-              libgnutls28-dev libsdl1.2-dev libssl-dev libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc linux-modules-extra-$(uname -r)
+              libgnutls28-dev libsdl1.2-dev libssl-dev libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc linux-modules-$(uname -r)
 
         - name: "Setup Java for Treble App"
           uses: null2264/actions/gradle-java-setup@240857a3fa6e2667311da86417c637d4f59e8d75
