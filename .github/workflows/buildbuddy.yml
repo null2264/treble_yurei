@@ -207,6 +207,7 @@ jobs:
             ##endregion
             mkdir -p vendor/lineage-priv/keys  # for the love of god, stop trying to create keys too early
             sed -i '/^ax_help$/d; /^generate_host_overrides$/d' build/envsetup.sh
+            sed -i 's/"$mode" == "-f"/"$mode" = "-f"/g' build/envsetup.sh
             . build/envsetup.sh
 
             echo "Umm... [1]"
