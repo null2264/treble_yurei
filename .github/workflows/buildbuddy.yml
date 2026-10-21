@@ -214,7 +214,8 @@ jobs:
             export RBE_use_rpc_credentials=false
             export RBE_service_no_auth=true
             ##endregion
-            sed -i '/^ax_help$/d; /^generate_host_overrides$/d' build/envsetup.sh
+            # For whatever reason, these calls caused the script to stuck
+            sed -i '/^[[:space:]]*ax_help$/d; /^[[:space:]]*generate_host_overrides$/d' build/envsetup.sh
             sed -i 's/"$mode" == "-f"/"$mode" = "-f"/g' build/envsetup.sh
             . build/envsetup.sh
 
