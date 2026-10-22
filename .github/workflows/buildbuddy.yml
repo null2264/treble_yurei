@@ -208,7 +208,7 @@ jobs:
             export RBE_METALAVA_POOL=default
             export RBE_LINT_POOL=default
             export RBE_reclient_timeout=60m
-            export RBE_exec_timeout=10m
+            export RBE_exec_timeout=20m
             export RBE_service="remote.buildbuddy.io:443"
             export RBE_remote_headers="x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}"
             export RBE_use_rpc_credentials=false
