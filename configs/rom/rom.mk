@@ -8,7 +8,7 @@ $(call inherit-product, device/phh/treble/lineage.mk)
 $(shell mkdir -p $(PRODUCT_OUT)/system/product/fonts)
 
 # google pixel gsans fonts (issue #63)
-$(call inherit-product-if-exists, vendor/pixel/gsans/common/common-vendor.mk)
+#$(call inherit-product-if-exists, vendor/pixel/gsans/common/common-vendor.mk)
 
 # restrict dexpreopt to boot classpath + system server only
 # saves ~150-200MB from system image (issue #76)
