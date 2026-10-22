@@ -222,7 +222,7 @@ jobs:
             axion treble_arm64_bvN ${{ github.event.inputs.build_type }} vanilla
 
             # ax -br -j"$(nproc --all)"
-            make target-files-package otatools -j4
+            make target-files-package otatools -j"$(nproc --all)"
             #${{ github.event.inputs.build_command }}
 
             TARGET_FILES=$(ls $OUT/obj/PACKAGING/target_files_intermediates/lineage_treble_arm64_bvN-target_files.zip | head -n 1)
