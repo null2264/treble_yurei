@@ -106,7 +106,7 @@ jobs:
             IMG_SIZE="$(($(df -k --output=avail "$GITHUB_WORKSPACE" | tail -n 1) - 1024000))"
             truncate -s ${IMG_SIZE}K adrod.img
             mkfs.btrfs adrod.img
-            sudo mount adrod.img ./adrodsrc -o defaults,noatime,compress-force=zstd,space_cache=v2,commit=120
+            sudo mount adrod.img ./adrodsrc -o defaults,noatime,compress=zstd,space_cache=v2,commit=120
             sudo chown "$(id -un):$(id -gn)" ./adrodsrc
 
             cd ./adrodsrc
@@ -191,6 +191,8 @@ jobs:
             export RBE_CLANG_TIDY_EXEC_STRATEGY=remote_local_fallback
             export RBE_METALAVA_EXEC_STRATEGY=remote_local_fallback
             export RBE_LINT_EXEC_STRATEGY=remote_local_fallback
+            export RBE_CXX_EXEC_STRATEGY=remote_local_fallback
+            export RBE_CXX_LINKS_EXEC_STRATEGY=remote_local_fallback
             export RBE_R8=1
             export RBE_D8=1
             export RBE_JAVAC=1
@@ -222,7 +224,7 @@ jobs:
             axion treble_arm64_bvN ${{ github.event.inputs.build_type }} vanilla
 
             # ax -br -j"$(nproc --all)"
-            make target-files-package otatools -j"$(nproc --all)"
+            make target-files-package otatools -j4
             #${{ github.event.inputs.build_command }}
 
             TARGET_FILES=$(ls $OUT/obj/PACKAGING/target_files_intermediates/lineage_treble_arm64_bvN-target_files.zip | head -n 1)
