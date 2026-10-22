@@ -191,8 +191,6 @@ jobs:
             export RBE_CLANG_TIDY_EXEC_STRATEGY=remote_local_fallback
             export RBE_METALAVA_EXEC_STRATEGY=remote_local_fallback
             export RBE_LINT_EXEC_STRATEGY=remote_local_fallback
-            export RBE_CXX_EXEC_STRATEGY=remote_local_fallback
-            export RBE_CXX_LINKS_EXEC_STRATEGY=remote_local_fallback
             export RBE_R8=1
             export RBE_D8=1
             export RBE_JAVAC=1
