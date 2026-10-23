@@ -16,7 +16,7 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     [ "$p" == treble/app ] && p=treble_app
     [ "$p" == vendor/hardware/overlay ] && p=vendor/hardware_overlay
     [ "$p" == vendor/partner/gms ] && p=vendor/partner_gms
-    pushd "$p"
+    pushd "$p" && {
     for patch in "$patches"/"$tree"/"$project"/*.patch; do
         echo ">> ${patch}"
         if test -d .git; then
@@ -26,4 +26,5 @@ for project in $(cd "$patches"/"$tree"; echo *); do
         fi
     done
     popd
+    }
 done
