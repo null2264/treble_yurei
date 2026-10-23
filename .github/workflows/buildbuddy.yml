@@ -28,8 +28,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  treble_app:
+    name: Build Treble App
+    runs-on: ubuntu-24.04
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v7
+
+      - name: "Setup Java for Treble App"
+        uses: null2264/actions/gradle-java-setup@240857a3fa6e2667311da86417c637d4f59e8d75
+        with:
+          java: '17'
+          distro: 'temurin'
+
+      - name: "Build Treble App"
+        run: |
+          git clone https://github.com/TrebleDroid/treble_app -b master --depth=1
+          cd treble_app
+          bash build.sh release
+
+      - name: "Upload to GitHub Artifacts"
+        uses: actions/upload-artifact@v7
+        with:
+          name: treble_app
+          path: treble_app/TrebleApp.apk
+
   build:
     name: Build ROM
+    needs: treble_app
     runs-on: ubuntu-24.04
     steps:
         - name: "Checkout"
@@ -144,17 +170,18 @@ jobs:
             path: "adrodsrc/vendor/lineage-priv"
             token: ${{ secrets.GH_PAT }}
 
+        - name: "Fetch treble_app"
+          uses: actions/download-artifact@v8
+          with:
+            name: treble_app
+            path: adrodsrc/treble_app
+
         - name: "Build ROM"
           timeout-minutes: 330
           run: |
             WD=$PWD
 
             cd ./adrodsrc
-
-            prevWD=$PWD
-            cd treble_app
-            bash build.sh release
-            cd $prevWD
 
             ##region Setup GSI product makefile
             prevWD=$PWD

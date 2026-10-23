@@ -25,7 +25,7 @@
   <project path="prebuilts/vndk/v30" name="platform/prebuilts/vndk/v30" remote="aosp" revision="5f9884aa352825291757dfd6694b874ad8c1805e" clone-depth="1" />
 
   <!-- trebledroid: treble app -->
-  <project path="treble_app" name="treble_app" remote="trebledroid" revision="master" clone-depth="1" />
+  <!-- <project path="treble_app" name="treble_app" remote="trebledroid" revision="master" clone-depth="1" /> -->
 
   <!-- vendor-priv -->
   <!-- FIXME: Replace with my own -->
