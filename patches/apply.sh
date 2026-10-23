@@ -26,5 +26,6 @@ for project in $(cd "$patches"/"$tree"; echo *); do
         fi
     done
     popd
-    }
+
+    } || {  [ "${IGNORE_BORKED_PATCHES:-false}" = "true" ] || exit 1; }
 done
