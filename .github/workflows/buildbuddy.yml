@@ -45,7 +45,7 @@ jobs:
         run: |
           WD=$PWD
           for tier in trebledroid trebledroid-staging rom personal yurei; do
-            $WD/patches/apply.sh . "${tier}" || {  [ "${IGNORE_BORKED_PATCHES:-false}" = "true" ] || exit 1; }
+            $WD/patches/apply.sh . "${tier}" || {  [ "${IGNORE_BORKED_PATCHES:-false}" = "true" ] && true || exit 1; }
           done
 
           git clone https://github.com/TrebleDroid/treble_app -b master --depth=1
@@ -147,7 +147,7 @@ jobs:
           repo sync -c -j8 --force-sync --no-clone-bundle --no-tags
 
           for tier in trebledroid trebledroid-staging rom personal yurei; do
-            $WD/patches/apply.sh . "${tier}" || {  [ "${IGNORE_BORKED_PATCHES:-false}" = "true" ] || exit 1; }
+            $WD/patches/apply.sh . "${tier}" || {  [ "${IGNORE_BORKED_PATCHES:-false}" = "true" ] && true || exit 1; }
           done
 
           if [ "${{ github.event.inputs.build_type }}" = "userdebug" ]; then
