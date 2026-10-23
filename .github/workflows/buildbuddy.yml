@@ -43,6 +43,11 @@ jobs:
 
       - name: "Build Treble App"
         run: |
+          WD=$PWD
+          for tier in trebledroid trebledroid-staging rom personal yurei; do
+            $WD/patches/apply.sh . "${tier}"
+          done
+
           git clone https://github.com/TrebleDroid/treble_app -b master --depth=1
           cd treble_app
           bash build.sh release
