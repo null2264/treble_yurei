@@ -19,6 +19,7 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     [ "$p" == vendor/partner/gms ] && p=vendor/partner_gms
 
     [ "$targetted_project" != "" ] && [ "$p" != "$targetted_project" ] && continue;
+    [ "$(grep '!' <<< "$targetted_project")" != "" ] && [ "$p" == "$(sed -nE "s/!(.+)/\1/p" <<< "$targetted_project")" ] && continue;
 
     pushd "$p"
     for patch in "$patches"/"$tree"/"$project"/*.patch; do
