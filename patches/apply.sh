@@ -4,6 +4,7 @@ set -e
 
 patches=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 tree="$2"
+targetted_project="$3"
 
 echo "Applying ${tree} patches:"
 [ -d "$patches/$tree" ] || { echo "  (no patches for tier '$tree', skipping)"; exit 0; }
@@ -16,7 +17,10 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     [ "$p" == treble/app ] && p=treble_app
     [ "$p" == vendor/hardware/overlay ] && p=vendor/hardware_overlay
     [ "$p" == vendor/partner/gms ] && p=vendor/partner_gms
-    pushd "$p" && {
+
+    [ "$p" != "" ] && [ "$p" != "$targetted_project" ] && continue;
+
+    pushd "$p"
     for patch in "$patches"/"$tree"/"$project"/*.patch; do
         echo ">> ${patch}"
         if test -d .git; then
@@ -26,6 +30,4 @@ for project in $(cd "$patches"/"$tree"; echo *); do
         fi
     done
     popd
-
-    } || {  [ "${IGNORE_BORKED_PATCHES:-false}" = "true" ] && true || exit 1; }
 done
