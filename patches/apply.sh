@@ -5,6 +5,8 @@ set -e
 patches=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 tree="$2"
 targetted_project="$3"
+excluded_project="$(grep '!' <<< "$targetted_project")"
+[ "$excluded_project" = "" ] && targetted_project=""
 
 echo "Applying ${tree} patches:"
 [ -d "$patches/$tree" ] || { echo "  (no patches for tier '$tree', skipping)"; exit 0; }
@@ -19,7 +21,7 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     [ "$p" == vendor/partner/gms ] && p=vendor/partner_gms
 
     [ "$targetted_project" != "" ] && [ "$p" != "$targetted_project" ] && continue;
-    [ "$(grep '!' <<< "$targetted_project")" != "" ] && [ "$p" == "$(sed -nE "s/!(.+)/\1/p" <<< "$targetted_project")" ] && continue;
+    [ "$excluded_project" != "" ] && [ "$p" == "$(sed -nE "s/!(.+)/\1/p" <<< "$excluded_project")" ] && continue;
 
     pushd "$p"
     for patch in "$patches"/"$tree"/"$project"/*.patch; do
