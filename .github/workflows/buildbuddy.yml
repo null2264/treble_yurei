@@ -156,13 +156,13 @@ jobs:
           repo sync -c -j8 --force-sync --no-clone-bundle --no-tags
 
           for tier in trebledroid trebledroid-staging rom personal yurei; do
-            $WD/patches/apply.sh . "${tier}" !treble_app
+            $WD/patches/apply.sh . "${tier}" '!treble_app'
           done
 
           if [ "${{ github.event.inputs.build_type }}" = "userdebug" ]; then
-            $WD/patches/apply.sh . debug-builds !treble_app
+            $WD/patches/apply.sh . debug-builds '!treble_app'
           else
-            $WD/patches/apply.sh . release-builds !treble_app
+            $WD/patches/apply.sh . release-builds '!treble_app'
           fi
 
       - name: "Display remaining disk space"
