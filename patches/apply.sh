@@ -5,7 +5,7 @@ set -e
 patches=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 tree="$2"
 targetted_project="$3"
-excluded_project="$(grep '!' <<< "$targetted_project")"
+excluded_project=$(grep '!' <<< "$targetted_project" || true)
 [ "$excluded_project" != "" ] && targetted_project=""
 
 echo "Applying ${tree} patches:"
