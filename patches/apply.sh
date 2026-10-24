@@ -18,7 +18,7 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     [ "$p" == vendor/hardware/overlay ] && p=vendor/hardware_overlay
     [ "$p" == vendor/partner/gms ] && p=vendor/partner_gms
 
-    [ "$p" != "" ] && [ "$p" != "$targetted_project" ] && continue;
+    [ "$targetted_project" != "" ] && [ "$p" != "$targetted_project" ] && continue;
 
     pushd "$p"
     for patch in "$patches"/"$tree"/"$project"/*.patch; do
