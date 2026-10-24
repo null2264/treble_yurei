@@ -45,6 +45,9 @@ jobs:
         run: |
           WD=$PWD
 
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git clone https://github.com/TrebleDroid/treble_app -b master --depth=1
 
           for tier in trebledroid trebledroid-staging rom personal yurei; do
