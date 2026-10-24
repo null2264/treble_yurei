@@ -6,7 +6,7 @@ patches=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 tree="$2"
 targetted_project="$3"
 excluded_project="$(grep '!' <<< "$targetted_project")"
-[ "$excluded_project" = "" ] && targetted_project=""
+[ "$excluded_project" != "" ] && targetted_project=""
 
 echo "Applying ${tree} patches:"
 [ -d "$patches/$tree" ] || { echo "  (no patches for tier '$tree', skipping)"; exit 0; }
