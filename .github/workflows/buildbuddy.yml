@@ -35,6 +35,10 @@ jobs:
       - name: "Checkout"
         uses: actions/checkout@v7
 
+      - name: "Set up environment variables"
+        run: |
+          echo "IGNORE_BORKED_PATCHES=${{ github.event.inputs.ignore_borked_patches }}" >> "$GITHUB_ENV"
+
       - name: "Setup Java for Treble App"
         uses: null2264/actions/gradle-java-setup@240857a3fa6e2667311da86417c637d4f59e8d75
         with:
