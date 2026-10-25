@@ -138,7 +138,7 @@ jobs:
           IMG_SIZE="$(($(df -k --output=avail "$GITHUB_WORKSPACE" | tail -n 1) - 1024000))"
           truncate -s ${IMG_SIZE}K adrod.img
           mkfs.btrfs adrod.img
-          sudo mount adrod.img ./adrodsrc -o defaults,noatime,compress=zstd,space_cache=v2,commit=120
+          sudo mount adrod.img ./adrodsrc -o defaults,noatime,compress-force=zstd,space_cache=v2,commit=120
           sudo chown "$(id -un):$(id -gn)" ./adrodsrc
 
           cd ./adrodsrc
