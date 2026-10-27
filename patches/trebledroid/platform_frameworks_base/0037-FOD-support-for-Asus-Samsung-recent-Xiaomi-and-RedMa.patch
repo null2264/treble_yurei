@@ -232,7 +232,7 @@ index a932e1e8c..640233c20 100644
 +        "vendor.xiaomi.hardware.fingerprintextension-V1.0-java",
          "aconfig_adbdauth_flags_java_lib",
          "AvfBuildFlags",
-     ],
+         "vendor.aospa.biometrics.face",
 diff --git a/services/core/java/com/android/server/biometrics/AuthService.java b/services/core/java/com/android/server/biometrics/AuthService.java
 index 141b595c6..d6384e7b6 100644
 --- a/services/core/java/com/android/server/biometrics/AuthService.java
