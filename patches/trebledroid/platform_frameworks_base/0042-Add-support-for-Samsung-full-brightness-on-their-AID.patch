@@ -23,7 +23,7 @@ index 640233c20..cb61b1fd4 100644
 +        "vendor.samsung.hardware.light-V1-java",
          "aconfig_adbdauth_flags_java_lib",
          "AvfBuildFlags",
-     ],
+         "vendor.aospa.biometrics.face",
 diff --git a/services/core/java/com/android/server/lights/LightsService.java b/services/core/java/com/android/server/lights/LightsService.java
 index d6349a676..19b0c2e17 100644
 --- a/services/core/java/com/android/server/lights/LightsService.java
