@@ -14,14 +14,6 @@ diff --git a/core/java/android/hardware/Camera.java b/core/java/android/hardware
 index 6ec70045f1f4..54ddae6b96aa 100644
 --- a/core/java/android/hardware/Camera.java
 +++ b/core/java/android/hardware/Camera.java
-@@ -50,6 +50,7 @@ import android.os.Parcel;
- import android.os.Process;
- import android.os.RemoteException;
- import android.os.ServiceManager;
-+import android.os.SystemProperties;
- import android.text.TextUtils;
- import android.util.Log;
- import android.view.Surface;
 @@ -485,6 +486,11 @@ public class Camera {
       * @see #open(int)
       */
