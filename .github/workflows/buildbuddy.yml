@@ -280,11 +280,94 @@ jobs:
           name: system-img
           path: adrodout
 
+      - name: "Set up environment variables"
+        run: |
+          echo "ROM_NAME='AxionOS'" >> "$GITHUB_ENV"
+
+      - name: Build EROFS image
+        working-directory: adrodout
+        run: |
+          set -o pipefail
+
+          finish() {
+            local status=$?
+            set +e
+            for dir in erofs-work/ext4 erofs-work/erofs; do
+              if mountpoint -q "$dir"; then
+                sudo umount -l "$dir"
+              fi
+            done
+            rm -rf erofs-work
+            if [ "$status" -ne 0 ]; then
+              sudo rm -f system-erofs.img
+              echo "::warning title=EROFS image skipped::erofs build failed (exit ${status}), releasing ext4 image only"
+            fi
+            exit 0
+          }
+          trap finish EXIT
+
+          list_metadata() {
+            (cd "$1" && sudo find . -printf '%U %G %m %l %p\n') | sort
+          }
+          list_xattrs() {
+            (cd "$1" && sudo getfattr --recursive --no-dereference --dump --match=- --encoding=hex .) \
+              | awk '/^# file: / { file = substr($0, 9); next } /=/ { print file " " $0 }' \
+              | sort
+          }
+
+          if ! sudo modprobe erofs; then
+            sudo apt-get install -y "linux-modules-extra-$(uname -r)"
+            sudo modprobe erofs
+          fi
+
+          mkdir -p erofs-work/ext4 erofs-work/erofs
+          sudo mount -o ro,loop,noload system.img erofs-work/ext4
+          sudo mkfs.erofs -zlz4hc,12 -b4096 -Lsystem -E^xattr-name-filter system-erofs.img erofs-work/ext4
+          sudo fsck.erofs system-erofs.img
+          sudo mount -o ro,loop system-erofs.img erofs-work/erofs
+
+          for fs in ext4 erofs; do
+            list_metadata "erofs-work/${fs}" > "erofs-work/${fs}.meta"
+            list_xattrs "erofs-work/${fs}" > "erofs-work/${fs}.xattr"
+          done
+          diff -u erofs-work/ext4.meta erofs-work/erofs.meta
+          diff -u erofs-work/ext4.xattr erofs-work/erofs.xattr
+
+          sudo chown "$(id -u):$(id -g)" system-erofs.img
+          ls -lh system-erofs.img
+
+      - id: compress
+        name: Compress image and generate checksums
+        run: |
+          TAG="b${BUILD_NUMBER}"
+
+          [ "${{ github.event.inputs.build_type }}" = "userdebug" ] && TAG="${TAG}-debug"
+
+          cd adrodout
+
+          img="${ROM_NAME}-arm64-ab-${TAG}.img"
+
+          mv -v system.img "${img}"
+          erofs=""
+          if [ -f system-erofs.img ]; then
+            erofs="${img%.img}-erofs.img"
+            mv -v system-erofs.img "${erofs}"
+          fi
+
+          sha512sum "${img}" ${erofs:+"${erofs}"} > "${ROM_NAME}-arm64-ab-${TAG}.sha512sum"
+          xz --best --compress --memlimit-compress=0 --threads=0 -v "${img}" ${erofs:+"${erofs}"}
+          sha512sum "${img}.xz" ${erofs:+"${erofs}.xz"} >> "${ROM_NAME}-arm64-ab-${TAG}.sha512sum"
+          echo "version_tag=${TAG}+${ROM_NAME}" >> "$GITHUB_OUTPUT"
+          echo "release_name=${ROM_NAME}-ab-${TAG}" >> "$GITHUB_OUTPUT"
+
       - name: "Create release (drafted)"
         uses: softprops/action-gh-release@v3.0.3
         with:
-          files: adrodout/*
-          tag_name: "Yuurei b${{github.run_id}}"
+          files: |
+            adrodout/*.img.xz
+            adrodout/*.sha512sum
+          name: "${{ steps.compress.outputs.release_name }}"
+          tag_name: "${{ steps.compress.outputs.version_tag }}"
           draft: true
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
