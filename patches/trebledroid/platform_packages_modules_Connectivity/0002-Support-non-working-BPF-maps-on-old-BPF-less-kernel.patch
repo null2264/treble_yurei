@@ -72,7 +72,7 @@ index 73869a7..4c81a07 100644
 
      // last in U QPR2 beta1
      const bool has_platform_bpfloader_rc = exists("/system/etc/init/bpfloader.rc");
-@@ -1727,10 +1728,10 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1706,10 +1707,10 @@ static int doLoad(char** argv, char * const envp[]) {
              ALOGW("[Arm KernelUpRev] 32-bit userspace unsupported on 6.2+ kernels.");
          } else if (isArm()) {
              ALOGE("[Arm] 64-bit userspace required on 6.2+ kernels (%d).", first_api_level);
@@ -85,7 +85,7 @@ index 73869a7..4c81a07 100644
          }
      }
 
-@@ -1744,7 +1745,7 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1723,7 +1724,7 @@ static int doLoad(char** argv, char * const envp[]) {
      if (isUserspace32bit() && isAtLeastKernelVersion(6, 13)) {
          // due to previous check only reachable on Arm && (<=T kernel uprev || TV || Wear)
          ALOGE("64-bit userspace required on 6.13+ kernels.");
@@ -94,7 +94,7 @@ index 73869a7..4c81a07 100644
      }
 
      if (isAtLeast25Q2) {
-@@ -1757,19 +1758,19 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1736,19 +1737,19 @@ static int doLoad(char** argv, char * const envp[]) {
          int v = fscanf(f, "# %d %d %d %d %d #", &y, &q, &a, &b, &c);
          ALOGI("detected %d of 5: %dQ%d api:%d.%d.%d", v, y, q, a, b, c);
          fclose(f);
@@ -121,7 +121,7 @@ index 73869a7..4c81a07 100644
      }
 
      if (runningAsRoot) {
-@@ -1780,7 +1781,9 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1759,7 +1760,9 @@ static int doLoad(char** argv, char * const envp[]) {
          // (this writeFile is known to fail on at least 4.19, but always defaults to 0 on
          // pre-5.13, on 5.13+ it depends on CONFIG_BPF_UNPRIV_DEFAULT_OFF)
          if (!writeFile("/proc/sys/kernel/unprivileged_bpf_disabled", "0\n") &&
@@ -132,7 +132,7 @@ index 73869a7..4c81a07 100644
      }
 
      if (isAtLeastU) {
-@@ -1795,29 +1798,45 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1775,29 +1778,45 @@ static int doLoad(char** argv, char * const envp[]) {
          // BPF_JIT is required by R VINTF (which means 4.14/4.19/5.4 kernels),
          // but 4.14/4.19 were released with P & Q, and only 5.4 is new in R+.
          if (!writeFile("/proc/sys/net/core/bpf_jit_enable", "1\n") &&
@@ -187,7 +187,9 @@ index 73869a7..4c81a07 100644
      }
  
      if (runningAsRoot) {  // implies U QPR3+ and kernel 4.14+
-@@ -1872,13 +1891,7 @@ static int doLoad(char** argv, char * const envp[]) {
+--- a/bpf/loader/NetBpfLoad.cpp
++++ b/bpf/loader/NetBpfLoad.cpp
+@@ -1853,13 +1872,7 @@ static int doLoad(char** argv, char * const envp[]) {
 
      // Load all ELF objects, create programs and maps, and pin them
      if (!loadAllObjects()) {
@@ -202,7 +204,7 @@ index 73869a7..4c81a07 100644
      }
 
      {
-@@ -1915,7 +1928,15 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1896,7 +1914,15 @@ static int doLoad(char** argv, char * const envp[]) {
      }
 
      // leave a flag that we're done
