@@ -38,10 +38,10 @@ diff --git a/packages/SystemUI/Android.bp b/packages/SystemUI/Android.bp
 index 677d78880..f07e77dba 100644
 --- a/packages/SystemUI/Android.bp
 +++ b/packages/SystemUI/Android.bp
-@@ -594,6 +594,10 @@ android_library {
-         "kairos",
+@@ -592,6 +592,10 @@ android_library {
          "displaylib",
          "aconfig_settings_flags_lib",
+         "vendor.lineage.powershare-V1-java",
 +        "vendor.goodix.hardware.biometrics.fingerprint-V2.1-java",
 +        "vendor.xiaomi.hw.touchfeature-V1.0-java",
 +        "vendor.xiaomi.hardware.fingerprintextension-V1.0-java",
@@ -180,14 +180,14 @@ index 55715a95c..158fef686 100644
              mLatencyTracker.onActionStart(ACTION_UDFPS_ILLUMINATE);
          }
          // Refresh screen timeout and boost process priority if possible.
-@@ -1113,12 +1171,19 @@ public class UdfpsController implements DozeReceiver, Dumpable {
-                     mUdfpsDisplayMode.enable(() -> dispatchOnUiReady(requestId));
+@@ -1121,12 +1121,19 @@ public class UdfpsController implements DozeReceiver, Dumpable {
+                 udfpsView.configureDisplay(() -> dispatchOnUiReady(requestId));
              }
          }
 +        if(SystemProperties.get("ro.vendor.build.fingerprint").contains("nubia/NX669")) {
 +            processCmd(13, 0, 0, new byte[0], 0);
 +        }
-
+ 
          if (isOptical()) {
              for (Callback cb : mCallbacks) {
                  cb.onFingerDown();
@@ -198,7 +198,7 @@ index 55715a95c..158fef686 100644
 +        }
 +
      }
-
+ 
      private void onFingerUp(long requestId, @NonNull View view) {
 @@ -1152,8 +1217,16 @@ public class UdfpsController implements DozeReceiver, Dumpable {
          mActivePointerId = MotionEvent.INVALID_POINTER_ID;
