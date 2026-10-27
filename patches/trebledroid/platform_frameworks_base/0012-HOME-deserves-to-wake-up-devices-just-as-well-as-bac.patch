@@ -13,9 +13,9 @@ diff --git a/core/java/android/view/KeyEvent.java b/core/java/android/view/KeyEv
 index ad43c7b7cdc3..f10e57156635 100644
 --- a/core/java/android/view/KeyEvent.java
 +++ b/core/java/android/view/KeyEvent.java
-@@ -2569,6 +2569,7 @@ public class KeyEvent extends InputEvent implements Parcelable {
-         switch (keyCode) {
+@@ -2945,6 +2945,7 @@ public class KeyEvent extends InputEvent implements Parcelable {
              case KeyEvent.KEYCODE_CAMERA:
+             case KeyEvent.KEYCODE_FOCUS:
              case KeyEvent.KEYCODE_MENU:
 +            case KeyEvent.KEYCODE_HOME:
              case KeyEvent.KEYCODE_PAIRING:
