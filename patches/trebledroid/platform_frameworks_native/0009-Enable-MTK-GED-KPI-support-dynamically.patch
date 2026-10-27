@@ -1,0 +1,32 @@
+From 64edc8e3e35dce49eb3867f0814ecbdfb3a1eaf1 Mon Sep 17 00:00:00 2001
+From: null <null@null.null>
+Date: Sat, 25 Nov 2023 08:15:28 -0500
+Subject: [PATCH 09/16] Enable MTK GED KPI support dynamically
+
+diff --git a/libs/gui/Surface.cpp b/libs/gui/Surface.cpp
+index cabc177..6adae2d 100644
+--- a/libs/gui/Surface.cpp
++++ b/libs/gui/Surface.cpp
+@@ -142,7 +142,7 @@ struct GED_BRIDGE_OUT_GPU_TIMESTAMP {
+     int is_ged_kpi_enabled;
+ };
+ 
+-static int doMtkGedKpi = 1;
++static int doMtkGedKpi = -1;
+ static int ged_fd = -1;
+ #endif
+ 
+@@ -218,6 +218,10 @@ Surface::Surface(const sp<IGraphicBufferProducer>& bufferProducer, bool controll
+     mMaxBufferCount = NUM_BUFFER_SLOTS;
+     mSurfaceControlHandle = surfaceControlHandle;
+ 
++    if (doMtkGedKpi == -1) {
++        doMtkGedKpi = android::base::GetIntProperty("persist.sys.phh.mtk_ged_kpi", 0);
++    }
++
+     #ifdef MTK_GED_KPI
+     if (ged_fd == -1 && doMtkGedKpi == 1) {
+         ALOGE("Opening ged");
+-- 
+2.52.0
+

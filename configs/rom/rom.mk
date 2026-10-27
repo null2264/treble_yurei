@@ -10,6 +10,9 @@ $(shell mkdir -p $(PRODUCT_OUT)/system/product/fonts)
 # google pixel gsans fonts (issue #63)
 #$(call inherit-product-if-exists, vendor/pixel/gsans/common/common-vendor.mk)
 
+# enable mtk_ged_kpi support
+$(call soong_config_set_bool,libgui,support_mtk_ged_kpi,true)
+
 # restrict dexpreopt to boot classpath + system server only
 # saves ~150-200MB from system image (issue #76)
 WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := true
