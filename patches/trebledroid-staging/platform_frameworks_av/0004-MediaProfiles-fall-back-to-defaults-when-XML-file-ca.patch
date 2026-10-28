@@ -28,7 +28,7 @@ index 0438806..9caaefe 100644
 --- a/media/libmedia/MediaProfiles.cpp
 +++ b/media/libmedia/MediaProfiles.cpp
 @@ -995,6 +995,11 @@ MediaProfiles::getInstance()
-         } else {
+                {
              sInstance = createInstanceFromXmlFile(value);
          }
 +        if (sInstance == NULL) {
