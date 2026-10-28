@@ -11,13 +11,26 @@ diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinge
 index 80d8f51..b6f893c 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -2907,7 +2907,8 @@ bool SurfaceFlinger::commit(PhysicalDisplayId pacesetterId,
+@@ -530,8 +530,11 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
+ 
+     mDebugFlashDelay = base::GetUintProperty("debug.sf.showupdates"s, 0u);
+ 
+-    property_get("debug.sf.disable_backpressure", value, "0");
+-    mPropagateBackpressure = !atoi(value);
++    // phh: backpressure is disabled by default for GSI compatibility.
++    // the treble app can enable it via enable_sf_hwc_backpressure=true,
++    // or force-disable it via sf_disable_backpressure=true.
++    mPropagateBackpressure = base::GetBoolProperty("persist.sys.phh.enable_sf_hwc_backpressure"s, false)
++            && !base::GetBoolProperty("persist.sys.phh.sf_disable_backpressure"s, false);
+     ALOGI_IF(!mPropagateBackpressure, "Disabling backpressure propagation");
+ 
+     mBackpressureGpuComposition = base::GetBoolProperty("debug.sf.enable_gl_backpressure"s, true);
+@@ -2907,7 +2914,7 @@ bool SurfaceFlinger::commit(PhysicalDisplayId pacesetterId,
          }
      }
  
 -    if (pacesetterFrameTarget.wouldBackpressureHwc()) {
-+    if (base::GetBoolProperty("persist.sys.phh.enable_sf_hwc_backpressure"s, true)
-+            && pacesetterFrameTarget.isFramePending()) {
++    if (pacesetterFrameTarget.isFramePending()) {
          if (mPropagateBackpressure && (mBackpressureGpuComposition || pacesetterFrameTarget.didMissHwcFrame())) {
              mScheduler->getVsyncSchedule()->getTracker().onFrameMissed(
                      pacesetterFrameTarget.expectedPresentTime());
