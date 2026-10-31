@@ -286,7 +286,7 @@ jobs:
 
       - name: "Set up dependencies"
         run: |
-          DEBIAN_FRONTEND=noninteractive sudo apt install -yq erofs-utils
+          DEBIAN_FRONTEND=noninteractive sudo apt install -yq erofs-utils attr
 
       - name: Build EROFS image
         working-directory: adrodout
