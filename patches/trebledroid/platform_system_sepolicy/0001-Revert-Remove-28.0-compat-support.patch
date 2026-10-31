@@ -759,14 +759,6 @@ index 1dd9813..f526827 100644
          "plat_29.0.cil",
          "plat_30.0.cil",
          "plat_31.0.cil",
-@@ -1280,6 +1287,7 @@ phony {
-             "sepolicy_compat_test",
-             "sepolicy_test",
-             "sepolicy_dev_type_test",
-+            "treble_sepolicy_tests_28.0",
-             "treble_sepolicy_tests_29.0",
-             "treble_sepolicy_tests_30.0",
-             "treble_sepolicy_tests_31.0",
 diff --git a/compat/Android.bp b/compat/Android.bp
 index be895d9..4a144de 100644
 --- a/compat/Android.bp
