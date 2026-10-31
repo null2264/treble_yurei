@@ -284,6 +284,10 @@ jobs:
         run: |
           echo "ROM_NAME='AxionOS'" >> "$GITHUB_ENV"
 
+      - name: "Set up dependencies"
+        run: |
+          DEBIAN_FRONTEND=noninteractive sudo apt install -yq erofs-utils
+
       - name: Build EROFS image
         working-directory: adrodout
         run: |
