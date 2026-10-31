@@ -27,8 +27,8 @@ diff --git a/media/libmedia/MediaProfiles.cpp b/media/libmedia/MediaProfiles.cpp
 index 0438806..9caaefe 100644
 --- a/media/libmedia/MediaProfiles.cpp
 +++ b/media/libmedia/MediaProfiles.cpp
-@@ -995,6 +995,11 @@ MediaProfiles::getInstance()
-                {
+@@ -1043,6 +1043,11 @@ MediaProfiles::getInstance()
+                 }
              sInstance = createInstanceFromXmlFile(value);
          }
 +        if (sInstance == NULL) {
@@ -39,7 +39,7 @@ index 0438806..9caaefe 100644
          CHECK(sInstance != NULL);
          sInstance->checkAndAddRequiredProfilesIfNecessary();
          sIsInitialized = true;
-@@ -1236,8 +1241,11 @@ bool MediaProfiles::checkXmlFile(const char* xmlFile) {
+@@ -1284,8 +1289,11 @@ bool MediaProfiles::checkXmlFile(const char* xmlFile) {
  /*static*/ MediaProfiles*
  MediaProfiles::createInstanceFromXmlFile(const char *xml)
  {
