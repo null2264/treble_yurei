@@ -17,14 +17,14 @@ diff --git a/init/first_stage_mount.cpp b/init/first_stage_mount.cpp
 index 6b413f6d6..5a7a78e3d 100644
 --- a/init/first_stage_mount.cpp
 +++ b/init/first_stage_mount.cpp
-@@ -450,7 +450,6 @@ bool FirstStageMountVBootV2::MountPartition(const Fstab::iterator& begin, bool e
-     }
-     if (!SetUpDmVerity(&(*begin))) {
-         PLOG(ERROR) << "Failed to setup verity for '" << begin->mount_point << "'";
--        return false;
-     }
-
-     bool mounted = (fs_mgr_do_mount_one(*begin) == 0);
+@@ -463,7 +463,6 @@ bool FirstStageMountVBootV2::MountPartition(const Fstab::iterator& begin, bool e
+     if (begin->fs_mgr_flags.avb) {
+         if (!SetUpDmVerity(&(*begin))) {
+             PLOG(ERROR) << "Failed to setup verity for '" << begin->mount_point << "'";
+-            return false;
+         }
+     } else {
+         LOG(INFO) << "AVB is not enabled, skip verity setup for '" << begin->mount_point << "'";
 -- 
 2.52.0
 
