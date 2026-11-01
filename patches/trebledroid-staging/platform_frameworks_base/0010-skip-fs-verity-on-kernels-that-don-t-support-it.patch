@@ -16,14 +16,11 @@ guard the four unguarded fs-verity callsites:
 - InstallPackageHelper: checking fs-verity on system package updates
 - ApkSignatureSchemeV4Verifier: fs-verity consistency check during
   v4 signature verification
-- PackageVerityExt: boot-time fs-verity check on system package
-  updates that was causing updates to be rolled back on every reboot
 ---
  .../java/android/util/apk/ApkSignatureSchemeV4Verifier.java | 4 +++-
  core/java/com/android/internal/security/VerityUtils.java    | 6 +++++-
  .../java/com/android/server/pm/PackageInstallerSession.java | 2 +-
- .../core/java/com/android/server/pm/PackageVerityExt.java   | 2 +-
- 4 files changed, 10 insertions(+), 4 deletions(-)
+ 3 files changed, 9 insertions(+), 3 deletions(-)
 
 diff --git a/core/java/android/util/apk/ApkSignatureSchemeV4Verifier.java b/core/java/android/util/apk/ApkSignatureSchemeV4Verifier.java
 index ac9ebe58e..a8b8beda0 100644
@@ -68,19 +65,6 @@ index 36adc149c..822054250 100644
 -        if (!isIncrementalInstallation()) {
 +        if (!isIncrementalInstallation() && VerityUtils.isFsVeritySupported()) {
              enableFsVerityToAddedApksWithIdsig();
-         }
- 
-diff --git a/services/core/java/com/android/server/pm/PackageVerityExt.java b/services/core/java/com/android/server/pm/PackageVerityExt.java
-index 83972db25..e16de1dca 100644
---- a/services/core/java/com/android/server/pm/PackageVerityExt.java
-+++ b/services/core/java/com/android/server/pm/PackageVerityExt.java
-@@ -133,7 +133,7 @@ public class PackageVerityExt {
-             }
-         }
- 
--        if (checkFsVerity) {
-+        if (checkFsVerity && VerityUtils.isFsVeritySupported()) {
-             checkFsVerity(systemPkgUpdate);
          }
  
 -- 
