@@ -139,16 +139,6 @@ diff --git a/service/src/com/android/server/BpfNetMaps.java b/service/src/com/an
 index 44a4c29..fc609f8 100644
 --- a/service/src/com/android/server/BpfNetMaps.java
 +++ b/service/src/com/android/server/BpfNetMaps.java
-@@ -483,8 +483,7 @@ public class BpfNetMaps {
-      NetworkStackUtils.isAtLeast25Q2 when it is moved to a static lib.
-      */
-     public static boolean isAtLeast25Q2() {
--        return SdkLevel.isAtLeastB()  || (SdkLevel.isAtLeastV()
--                && "Baklava".equals(Build.VERSION.CODENAME));
-+        return false;
-     }
-
-     private void removeRule(final int uid, final long match, final String caller) {
 @@ -1079,6 +1078,10 @@ public class BpfNetMaps {
      @RequiresApi(Build.VERSION_CODES.CUR_DEVELOPMENT)
      public void removeUidFromLocalNetBlockMap(final int uid) {
