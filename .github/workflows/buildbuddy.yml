@@ -282,7 +282,7 @@ jobs:
 
       - name: "Set up environment variables"
         run: |
-          echo "ROM_NAME='AxionOS'" >> "$GITHUB_ENV"
+          echo "ROM_NAME=AxionOS" >> "$GITHUB_ENV"
 
       - name: "Set up dependencies"
         run: |
