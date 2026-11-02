@@ -49,7 +49,8 @@ index af9170320..73d08f9be 100644
 +                        }
 +
                          if (isInstallerPlayStore) {
-                             // lock that is held at this point is per-session lock, call into
-                             // PackageManager is safe
+                             if (mVersionCode <= params.maxAllowedVersion) {
+                                 break;
+                             }
 -- 
 2.56.0
