@@ -12,12 +12,12 @@ value but not the other. stock ROMs ship both entries.
  1 file changed, 16 insertions(+)
 
 diff --git a/US.xml b/US.xml
-index e7562b6..6a6bd84 100644
+index b384d0f..7f06186 100644
 --- a/US.xml
 +++ b/US.xml
-@@ -3945,6 +3945,22 @@
-         roaming_protocol="IP"
-         type="default,dun,supl"
+@@ -338,6 +338,22 @@
+         proxy="wireless.cingular.com"
+         type="default,mms"
      />
 +    <apn
 +        mcc="311"
@@ -37,7 +37,6 @@ index e7562b6..6a6bd84 100644
 +    />
      <apn
          mcc="311"
-         mnc="480"
+         mnc="680"
 -- 
 2.54.0
-
