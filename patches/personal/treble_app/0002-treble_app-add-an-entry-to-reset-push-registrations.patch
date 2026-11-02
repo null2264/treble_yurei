@@ -54,7 +54,7 @@ index fb10b68..8456c7b 100644
 +                SystemProperties.set("persist.sys.reset_push", "1")
 +
 +                // the prop handler sets 2 once every app is reset
-+                val context = requireContext().applicationContext
++                val context = getActivity()?.applicationContext ?: throw RuntimeException("Context can't be null")
 +                Thread {
 +                    for (i in 0 until 120) {
 +                        Thread.sleep(500)
