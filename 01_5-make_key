@@ -9,13 +9,17 @@ cd build/src
 
 mkdir -p keys/
 cd keys/
-CN=Yurei
-for key in ${signing_keys[@]}; do
-    ../development/tools/make_key $key "/CN=$CN/" || true
+SUBJECT="/C=ID/ST=South Sumatera/L=Palembang/O=null2264/OU=null2264/CN=null2264/emailAddress=me@aap.my.id"
 
-    openssl pkcs8 -in "${key}.pk8" -topk8 -nocrypt -outform DER -out "${key}.pk8.tmp"
-    mv "${key}.pk8.tmp" "${key}.pk8"
+if [ -f ./make_key ]; then
+    cp ../development/tools/make_key ./make_key
+    sed -i 's|2048|4096|g' ./make_key
+fi
+
+for key in ${signing_keys[@]}; do
+    echo "Generating $cert certificate.."
+    echo "" | ./make_key "$cert" "$SUBJECT"
+    openssl pkcs8 -in "${cert}.pk8" -inform DER -nocrypt -out "${cert}.pem"
 done
-openssl genrsa 4096 | openssl pkcs8 -topk8 -nocrypt -out avb.pem
-../external/avb/avbtool.py extract_public_key --key avb.pem --output avb_pkmd.bin
+
 cd ../

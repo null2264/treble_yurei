@@ -25,8 +25,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  treble_app:
+    name: Build Treble App
+    runs-on: ubuntu-24.04
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v7
+
+      - name: "Set up environment variables"
+        run: |
+          echo "IGNORE_BORKED_PATCHES=${{ github.event.inputs.ignore_borked_patches }}" >> "$GITHUB_ENV"
+
+      - name: "Setup Java for Treble App"
+        uses: null2264/actions/gradle-java-setup@240857a3fa6e2667311da86417c637d4f59e8d75
+        with:
+          java: '17'
+          distro: 'temurin'
+
+      - name: "Build Treble App"
+        run: |
+          WD=$PWD
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git clone https://github.com/TrebleDroid/treble_app -b master --depth=1
+
+          for tier in trebledroid trebledroid-staging rom personal yurei; do
+            $WD/patches/apply.sh . "${tier}" treble_app
+          done
+
+          cd treble_app
+          bash build.sh release
+
+      - name: "Upload to GitHub Artifacts"
+        uses: actions/upload-artifact@v7
+        with:
+          name: treble_app
+          path: treble_app/TrebleApp.apk
+
   build:
     name: Build ROM
+    needs: treble_app
     runs-on: ubuntu-24.04
     steps:
         - name: "Checkout"
@@ -41,8 +81,6 @@ jobs:
 
         - name: "Free disk space"
           uses: rokibhasansagar/slimhub_actions@main
-          with:
-            retain: "android_sdk"
 
         - name: "Set up dependencies"
           run: |
@@ -50,13 +88,9 @@ jobs:
             wget https://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.3-2_amd64.deb && sudo dpkg -i libncurses5_6.3-2_amd64.deb && rm -f libncurses5_6.3-2_amd64.deb
             DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
               bc g++-multilib gcc-multilib gperf imagemagick protobuf-compiler python3-protobuf lib32readline-dev lib32z1-dev libdw-dev libelf-dev libyaml-dev \
-              libgnutls28-dev libsdl1.2-dev libssl-dev libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc linux-modules-extra-$(uname -r)
+              libgnutls28-dev libsdl1.2-dev libssl-dev libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc linux-modules-$(uname -r)
 
-        - name: "Setup Java for Treble App"
-          uses: null2264/actions/gradle-java-setup@240857a3fa6e2667311da86417c637d4f59e8d75
-          with:
-            java: '17'
-            distro: 'temurin'
+            DEBIAN_FRONTEND=noninteractive sudo apt install -yq linux-modules-extra-$(uname -r) || true  # It's a gacha whether we gonna get Linux 6 or Linux 7
 
         - name: "Set up zram"
           run: |
@@ -68,6 +102,19 @@ jobs:
             sudo mkswap /dev/zram0
             sudo swapon -p 100 /dev/zram0
             sudo sysctl vm.swappiness=200
+
+        - name: "Set up auth for googlesource.com"
+          run: |
+            eval 'set +o history' 2>/dev/null || setopt HIST_IGNORE_SPACE 2>/dev/null
+             touch ~/.gitcookies
+             chmod 0600 ~/.gitcookies
+
+             git config --global http.cookiefile ~/.gitcookies
+
+             tr , \\t <<\__END__ >>~/.gitcookies
+            ${{ secrets.GOOGLE_SOURCES_COOKIES}}
+            __END__
+            eval 'set -o history' 2>/dev/null || unsetopt HIST_IGNORE_SPACE 2>/dev/null
 
         - name: "Set up adrod repo"
           run: |
@@ -105,18 +152,32 @@ jobs:
             repo sync -c -j8 --force-sync --no-clone-bundle --no-tags
 
             for tier in trebledroid trebledroid-staging rom personal yurei; do
-              $WD/patches/apply.sh . "${tier}"
+              $WD/patches/apply.sh . "${tier}" '!treble_app'
             done
 
             if [ "${{ github.event.inputs.build_type }}" = "userdebug" ]; then
-              $WD/patches/apply.sh . debug-builds
+              $WD/patches/apply.sh . debug-builds '!treble_app'
             else
-              $WD/patches/apply.sh . release-builds
+              $WD/patches/apply.sh . release-builds '!treble_app'
             fi
 
         - name: "Display remaining disk space"
           run: |
             df -h "$GITHUB_WORKSPACE/adrodsrc"
+
+        - name: "Fetch signing keys"
+          uses: actions/checkout@v7
+          with:
+            repository: null2264/vendor_lineage-priv
+            ref: 16.2+yurei
+            path: adrodsrc/vendor/lineage-priv
+            token: ${{ secrets.GH_PAT }}
+
+        - name: "Fetch treble_app"
+          uses: actions/download-artifact@v8
+          with:
+            name: treble_app
+            path: adrodsrc/treble_app
 
         - name: "Build ROM"
           timeout-minutes: 330
@@ -124,11 +185,6 @@ jobs:
             WD=$PWD
 
             cd ./adrodsrc
-
-            prevWD=$PWD
-            cd treble_app
-            bash build.sh release
-            cd $prevWD
 
             ##region Setup GSI product makefile
             prevWD=$PWD
@@ -187,7 +243,7 @@ jobs:
             export RBE_service_no_auth=true
             ##endregion
 
-            . b*/e*
+            . build/envsetup.sh
 
             AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
             ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
@@ -195,10 +251,19 @@ jobs:
 
             lunch treble_arm64_bvN-${ANDROID_VERSION_TAG}-${{ github.event.inputs.build_type }}
 
+            echo "==> Building Yurei"
             make target-files-package otatools -j"$(nproc --all)"
             #${{ github.event.inputs.build_command }}
 
             TARGET_FILES=$(ls $OUT/obj/PACKAGING/target_files_intermediates/treble_arm64_bvN-target_files.zip | head -n 1)
+
+            echo "==> Signing..."
+            prevWD=$PWD
+              cd "vendor/lineage-priv"
+              ./scripts/sign
+            cd $prevWD
+
+            echo "==> Extracting system image..."
             unzip -j -q "$TARGET_FILES" IMAGES/system.img -d ./
 
         - name: "Upload to GitHub Artifacts"
@@ -219,11 +284,98 @@ jobs:
           name: system-img
           path: adrodout
 
+      - name: "Set up environment variables"
+        run: |
+          echo "ROM_NAME=Yurei" >> "$GITHUB_ENV"
+
+      - name: "Set up dependencies"
+        run: |
+          DEBIAN_FRONTEND=noninteractive sudo apt install -yq erofs-utils attr
+
+      - name: Build EROFS image
+        working-directory: adrodout
+        run: |
+          set -o pipefail
+
+          finish() {
+            local status=$?
+            set +e
+            for dir in erofs-work/ext4 erofs-work/erofs; do
+              if mountpoint -q "$dir"; then
+                sudo umount -l "$dir"
+              fi
+            done
+            rm -rf erofs-work
+            if [ "$status" -ne 0 ]; then
+              sudo rm -f system-erofs.img
+              echo "::warning title=EROFS image skipped::erofs build failed (exit ${status}), releasing ext4 image only"
+            fi
+            exit 0
+          }
+          trap finish EXIT
+
+          list_metadata() {
+            (cd "$1" && sudo find . -printf '%U %G %m %l %p\n') | sort
+          }
+          list_xattrs() {
+            (cd "$1" && sudo getfattr --recursive --no-dereference --dump --match=- --encoding=hex .) \
+              | awk '/^# file: / { file = substr($0, 9); next } /=/ { print file " " $0 }' \
+              | sort
+          }
+
+          if ! sudo modprobe erofs; then
+            sudo apt-get install -y "linux-modules-extra-$(uname -r)"
+            sudo modprobe erofs
+          fi
+
+          mkdir -p erofs-work/ext4 erofs-work/erofs
+          sudo mount -o ro,loop,noload system.img erofs-work/ext4
+          sudo mkfs.erofs -zlz4hc,12 -b4096 -Lsystem -E^xattr-name-filter system-erofs.img erofs-work/ext4
+          sudo fsck.erofs system-erofs.img
+          sudo mount -o ro,loop system-erofs.img erofs-work/erofs
+
+          for fs in ext4 erofs; do
+            list_metadata "erofs-work/${fs}" > "erofs-work/${fs}.meta"
+            list_xattrs "erofs-work/${fs}" > "erofs-work/${fs}.xattr"
+          done
+          diff -u erofs-work/ext4.meta erofs-work/erofs.meta
+          diff -u erofs-work/ext4.xattr erofs-work/erofs.xattr
+
+          sudo chown "$(id -u):$(id -g)" system-erofs.img
+          ls -lh system-erofs.img
+
+      - id: compress
+        name: Compress image and generate checksums
+        run: |
+          TAG="b${BUILD_NUMBER}"
+
+          [ "${{ github.event.inputs.build_type }}" = "userdebug" ] && TAG="${TAG}-debug"
+
+          cd adrodout
+
+          img="${ROM_NAME}-arm64-ab-${TAG}.img"
+
+          mv -v system.img "${img}"
+          erofs=""
+          if [ -f system-erofs.img ]; then
+            erofs="${img%.img}-erofs.img"
+            mv -v system-erofs.img "${erofs}"
+          fi
+
+          sha512sum "${img}" ${erofs:+"${erofs}"} > "${ROM_NAME}-arm64-ab-${TAG}.sha512sum"
+          xz --best --compress --memlimit-compress=0 --threads=0 -v "${img}" ${erofs:+"${erofs}"}
+          sha512sum "${img}.xz" ${erofs:+"${erofs}.xz"} >> "${ROM_NAME}-arm64-ab-${TAG}.sha512sum"
+          echo "version_tag=${TAG}+${ROM_NAME}" >> "$GITHUB_OUTPUT"
+          echo "release_name=${ROM_NAME}-ab-${TAG}" >> "$GITHUB_OUTPUT"
+
       - name: "Create release (drafted)"
         uses: softprops/action-gh-release@v3.0.3
         with:
-          files: adrodout/*
-          tag_name: "Yuurei b${{github.run_id}}"
+          files: |
+            adrodout/*.img.xz
+            adrodout/*.sha512sum
+          name: "${{ steps.compress.outputs.release_name }}"
+          tag_name: "${{ steps.compress.outputs.version_tag }}"
           draft: true
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
