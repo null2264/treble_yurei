@@ -255,8 +255,6 @@ jobs:
             make target-files-package otatools -j"$(nproc --all)"
             #${{ github.event.inputs.build_command }}
 
-            TARGET_FILES=$(ls $OUT/obj/PACKAGING/target_files_intermediates/treble_arm64_bvN-target_files.zip | head -n 1)
-
             echo "==> Signing..."
             prevWD=$PWD
               cd "vendor/lineage-priv"
@@ -264,7 +262,7 @@ jobs:
             cd $prevWD
 
             echo "==> Extracting system image..."
-            unzip -j -q "$TARGET_FILES" IMAGES/system.img -d ./
+            unzip -j -q "${OUT}"/signed-target_files.zip IMAGES/system.img -d ./
 
         - name: "Upload to GitHub Artifacts"
           uses: actions/upload-artifact@v7
