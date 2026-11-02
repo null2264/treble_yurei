@@ -98,7 +98,7 @@ index e6dec70b52eb3..c74b5e6dc036b 100644
      private int mShutdownBatteryTemperature;
      private boolean mShutdownIfNoPower;
 +    private boolean mBatteryProtect;
-+    private boolean mBatteryMaxLevel;
++    private int mBatteryMaxLevel;
 +    private boolean mChargeDisabled;
  
      private static String sSystemUiPackage;
