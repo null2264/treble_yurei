@@ -86,7 +86,7 @@ index da4b79a..a9e4455 100644
 +            android:key="key_misc_reset_push"
 +            android:title="Re-register apps for notifications"
 +            android:summary="Use after switching between Google Play services and microG\nApps are stopped and need to be opened once" />
-         <SwitchPreferenceCompat
+         <SwitchPreference
              android:defaultValue="false"
              android:key="key_misc_no_hwcomposer"
 -- 
