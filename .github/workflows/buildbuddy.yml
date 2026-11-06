@@ -256,6 +256,7 @@ jobs:
             #${{ github.event.inputs.build_command }}
 
             echo "==> Signing..."
+            export KEY_DIR="$PWD/vendor/lineage-priv/keys"
             prevWD=$PWD
               cd "vendor/lineage-priv"
               ./scripts/sign
