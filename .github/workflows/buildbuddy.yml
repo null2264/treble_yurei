@@ -257,10 +257,7 @@ jobs:
 
             echo "==> Signing..."
             export KEY_DIR="$PWD/vendor/lineage-priv/keys"
-            prevWD=$PWD
-              cd "vendor/lineage-priv"
-              ./scripts/sign
-            cd $prevWD
+            vendor/lineage-priv/scripts/sign
 
             echo "==> Extracting system image..."
             unzip -j -q "${OUT}"/signed-target_files.zip IMAGES/system.img -d ./
