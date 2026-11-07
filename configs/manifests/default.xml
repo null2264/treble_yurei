@@ -10,9 +10,6 @@
   <remote name="trebledroid" fetch="https://github.com/TrebleDroid/" />
   <remote name="null2264" fetch="https://github.com/null2264/" />
 
-  <!-- trebledroid: device -->
-  <project path="device/phh/treble" name="android_device_phh_treble" remote="null2264" revision="android-16.0" clone-depth="1" />
-
   <!-- andycgyan: qcrilam -->
   <project path="packages/apps/QcRilAm" name="android_packages_apps_QcRilAm" remote="andycgyan" revision="master" clone-depth="1" />
 
@@ -27,6 +24,13 @@
 
   <!-- lineage: apn database -->
   <project path="vendor/apn" name="android_vendor_apn" remote="lineage" revision="main" clone-depth="1" />
+
+  <!-- trebledroid: device -->
+  <project path="device/phh/treble" name="android_device_phh_treble" remote="null2264" revision="android-16.0" clone-depth="1" />
+
+  <!-- yurei: settings -->
+  <remove-project name="platform_packages_apps_Settings" />
+  <project path="packages/apps/Settings" name="platform_packages_apps_Settings" remote="null2264" revision="16-qpr2" clone-depth="1" />
 
   <!-- vendor-priv -->
   <!-- FIXME: Replace with my own -->
