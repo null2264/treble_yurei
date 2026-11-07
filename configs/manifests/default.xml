@@ -32,6 +32,9 @@
   <remove-project name="platform_packages_apps_Settings" />
   <project path="packages/apps/Settings" name="platform_packages_apps_Settings" remote="null2264" revision="16-qpr2" clone-depth="1" />
 
+  <!-- yurei: freeform -->
+  <project path="packages/apps/LMOFreeform" name="packages_apps_LMOFreeform" remote="null2264" revision="16" clone-depth="1" />
+
   <!-- vendor-priv -->
   <!-- FIXME: Replace with my own -->
   <!-- <project path="vendor/cawilliamson-priv" name="vendor_cawilliamson-priv" remote="cawilliamson-priv" revision="main" clone-depth="1" /> -->
