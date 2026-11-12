@@ -1,0 +1,23 @@
+From 7a8f264dd3d5ab4f5d2054d112c4a2ee59d9d2cf Mon Sep 17 00:00:00 2001
+From: Ahmad Ansori Palembani <46041660+null2264@users.noreply.github.com>
+Date: Thu, 12 Nov 2026 00:00:00 +0000
+Subject: [PATCH] fix: include LMOFreeform AIDL in framework build
+
+---
+ Android.bp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Android.bp b/Android.bp
+index 000000000000..1111111111111 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -139,6 +139,7 @@ filegroup {
+         ":storaged_aidl",
+         ":vold_aidl",
+         ":deviceproductinfoconstants_aidl",
++        ":lmofreeform_aidl",
+ 
+         // For the generated R.java and Manifest.java
+         ":framework-res{.aapt.srcjar}",
+-- 
+2.39.2
