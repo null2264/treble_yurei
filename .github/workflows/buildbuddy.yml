@@ -98,7 +98,7 @@ jobs:
             totalmem=$(LC_ALL=C free | grep -e "^Mem:" | sed -e 's/^Mem: *//' -e 's/  *.*//')
             mem=$((totalmem * 4 * 1024))
             sleep 1
-            sudo zramctl /dev/zram0 -s $mem -a zstd
+            sudo zramctl /dev/zram0 -s $mem -a lz4
             sudo mkswap /dev/zram0
             sudo swapon -p 100 /dev/zram0
             sudo sysctl vm.swappiness=200
