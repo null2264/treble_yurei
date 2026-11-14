@@ -24,39 +24,39 @@ index 000000000000..111111111111 100644
 --- a/core/res/AndroidManifest.xml
 +++ b/core/res/AndroidManifest.xml
 @@ -949,6 +949,10 @@
-         android:knownCerts="@array/config_setContactsDefaultAccountKnownSigners"
-         android:featureFlag="android.provider.new_default_account_api_enabled"/>
- 
+          android:knownCerts="@array/config_setContactsDefaultAccountKnownSigners"
+          android:featureFlag="android.provider.new_default_account_api_enabled"/>
+  
 +    <!-- @hide -->
 +    <permission android:name="com.libremobileos.permission.START_FREEFORM"
 +                android:protectionLevel="signature|privileged" />
 +
-     <!-- ====================================================================== -->
-     <!-- Permissions for accessing user's calendar                              -->
-     <!-- ====================================================================== -->
+      <!-- ====================================================================== -->
+      <!-- Permissions for accessing user's calendar                              -->
+      <!-- ====================================================================== -->
 diff --git a/services/Android.bp b/services/Android.bp
 index 000000000000..111111111111 100644
 --- a/services/Android.bp
 +++ b/services/Android.bp
 @@ -133,6 +133,7 @@ filegroup {
-         ":services.coverage-sources",
-         ":services.credentials-sources",
-         ":services.devicepolicy-sources",
+          ":services.coverage-sources",
+          ":services.credentials-sources",
+          ":services.devicepolicy-sources",
 +        ":services.freeform-sources",
-         ":services.midi-sources",
-         ":services.musicsearch-sources",
-         ":services.net-sources",
+          ":services.midi-sources",
+          ":services.musicsearch-sources",
+          ":services.net-sources",
 @@ -339,6 +340,7 @@ java_library {
-         "services.credentials",
-         "services.devicepolicy",
-         "services.flags",
+          "services.credentials",
+          "services.devicepolicy",
+          "services.flags",
 +        "services.freeform",
-         "services.midi",
-         "services.musicsearch",
-         "services.net",
-diff --git a/services/freeform/Android.bp b/services/freeform/Android.bp
-new file mode 100644
-index 000000000000..111111111111
+          "services.midi",
+          "services.musicsearch",
+          "services.net",
+ diff --git a/services/freeform/Android.bp b/services/freeform/Android.bp
+ new file mode 100644
+ index 000000000000..111111111111
 --- /dev/null
 +++ b/services/freeform/Android.bp
 @@ -0,0 +1,27 @@
@@ -87,17 +87,17 @@ index 000000000000..111111111111
 +    ],
 +    jarjar_rules: "jarjar-rules.txt",
 +}
-diff --git a/services/freeform/jarjar-rules.txt b/services/freeform/jarjar-rules.txt
-new file mode 100644
-index 000000000000..111111111111
+ diff --git a/services/freeform/jarjar-rules.txt b/services/freeform/jarjar-rules.txt
+ new file mode 100644
+ index 000000000000..111111111111
 --- /dev/null
 +++ b/services/freeform/jarjar-rules.txt
 @@ -0,0 +1,2 @@
 +rule kotlin.** com.libremobileos.server.jarjar.@0
 +rule kotlinx.** com.libremobileos.server.jarjar.@0
-diff --git a/services/freeform/java/com/android/server/display/FreeformService.java b/services/freeform/java/com/android/server/display/FreeformService.java
-new file mode 100644
-index 000000000000..111111111111
+ diff --git a/services/freeform/java/com/android/server/display/FreeformService.java b/services/freeform/java/com/android/server/display/FreeformService.java
+ new file mode 100644
+ index 000000000000..111111111111
 --- /dev/null
 +++ b/services/freeform/java/com/android/server/display/FreeformService.java
 @@ -0,0 +1,59 @@
@@ -165,16 +165,14 @@ index 000000000000..111111111111 100644
 --- a/services/java/com/android/server/SystemServer.java
 +++ b/services/java/com/android/server/SystemServer.java
 @@ -2816,6 +2816,10 @@ private void startOtherServices(@NonNull TimingsTraceAndSlog t) {
-                 t.traceEnd();
-             }
- 
+                  t.traceEnd();
+              }
+  
 +            t.traceBegin("FreeformService");
 +            mSystemServiceManager.startService(
 +                    com.android.server.display.FreeformService.class);
 +            t.traceEnd();
 +
-             if (!isWatch) {
-                 // We don't run this on watches as there are no plans to use the data logged
-                 // on watch devices.
--- 
-2.39.2
+              if (!isWatch) {
+                  // We don't run this on watches as there are no plans to use the data logged
+                  // on watch devices.
