@@ -13,8 +13,8 @@ Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
  services/freeform/Android.bp                     | 27 ++++++++++++++++++++++++
  services/freeform/jarjar-rules.txt               |  2 ++
  .../server/display/FreeformService.java          | 59 ++++++++++++++++++++++++
- services/java/com/android/server/SystemServer.java |  5 ++++
- 6 files changed, 99 insertions(+)
+ services/java/com/android/server/SystemServer.java |  4 ++++
+ 6 files changed, 98 insertions(+)
  create mode 100644 services/freeform/Android.bp
  create mode 100644 services/freeform/jarjar-rules.txt
  create mode 100644 services/freeform/java/com/android/server/display/FreeformService.java
@@ -164,20 +164,13 @@ diff --git a/services/java/com/android/server/SystemServer.java b/services/java/
 index 000000000000..111111111111 100644
 --- a/services/java/com/android/server/SystemServer.java
 +++ b/services/java/com/android/server/SystemServer.java
-@@ -176,6 +176,7 @@
- import com.android.server.devicestate.DeviceStateManagerService;
- import com.android.server.display.AutoAODService;
- import com.android.server.display.DisplayManagerService;
-+import com.android.server.display.FreeformService;
- import com.android.server.display.color.ColorDisplayService;
- import com.android.server.dreams.DreamManagerService;
- import com.android.server.emergency.EmergencyAffordanceService;
-@@ -2816,6 +2817,10 @@ private void startOtherServices(@NonNull TimingsTraceAndSlog t) {
+@@ -2816,6 +2816,10 @@ private void startOtherServices(@NonNull TimingsTraceAndSlog t) {
                  t.traceEnd();
              }
  
 +            t.traceBegin("FreeformService");
-+            mSystemServiceManager.startService(FreeformService.class);
++            mSystemServiceManager.startService(
++                    com.android.server.display.FreeformService.class);
 +            t.traceEnd();
 +
              if (!isWatch) {
