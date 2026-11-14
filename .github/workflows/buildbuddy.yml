@@ -203,7 +203,7 @@ jobs:
 
             ##region RBE environment variables
             export USE_RBE=true
-            export NINJA_REMOTE_NUM_JOBS=40
+            export NINJA_REMOTE_NUM_JOBS=256
             export RBE_use_unified_downloads=true
             export RBE_use_unified_uploads=true
             export RBE_R8_EXEC_STRATEGY=remote_local_fallback
