@@ -1,0 +1,60 @@
+From 2a1e0e50fed8feb87e5ecb9a928881df58f0200a Mon Sep 17 00:00:00 2001
+From: Adithya R <gh0strider.2k18.reborn@gmail.com>
+Date: Sat, 23 Nov 2024 08:49:54 +0000
+Subject: [PATCH] core: Broadcast intent when display power state changes
+
+Other (system) apps can use this to perform specific tasks, such as for DOZE state.
+
+Change-Id: I2c62767a60db58e3999de65fbf506e5cc137e28e
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+---
+
+diff --git a/core/java/android/content/Intent.java b/core/java/android/content/Intent.java
+--- a/core/java/android/content/Intent.java
++++ b/core/java/android/content/Intent.java
+@@ -4591,6 +4591,13 @@ public static Intent createChooser(Intent target, CharSequence title, IntentSend
+      */
+     public static final String ACTION_OVERLAY_CHANGED = "android.intent.action.OVERLAY_CHANGED";
+ 
++    /**
++     * Broadcast Action: Display power state has changed.
++     * @hide
++     */
++    public static final String ACTION_DISPLAY_STATE_CHANGED =
++            "android.intent.action.DISPLAY_STATE_CHANGED";
++
+     /**
+      * Activity Action: Allow the user to select and return one or more existing
+      * documents. When invoked, the system will display the various
+
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -834,6 +834,7 @@
+     <protected-broadcast android:name="android.service.autofill.action.DELAYED_FILL" />
+     <protected-broadcast android:name="android.app.action.PROVISIONING_COMPLETED" />
+     <protected-broadcast android:name="android.app.action.LOST_MODE_LOCATION_UPDATE" />
++    <protected-broadcast android:name="android.intent.action.DISPLAY_STATE_CHANGED" />
+ 
+     <!-- Added in U -->
+     <protected-broadcast android:name="android.intent.action.PROFILE_ADDED" />
+
+diff --git a/services/core/java/com/android/server/display/DisplayManagerService.java b/services/core/java/com/android/server/display/DisplayManagerService.java
+--- a/services/core/java/com/android/server/display/DisplayManagerService.java
++++ b/services/core/java/com/android/server/display/DisplayManagerService.java
+@@ -485,6 +485,13 @@ public synchronized void requestDisplayState(int displayId, int state, float bri
+             if (state != Display.STATE_OFF) {
+                 requestDisplayStateInternal(displayId, state, brightness, sdrBrightness);
+             }
++
++            if (stateChanged) {
++                Intent intent = new Intent(Intent.ACTION_DISPLAY_STATE_CHANGED)
++                        .addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY
++                                | Intent.FLAG_RECEIVER_FOREGROUND);
++                mContext.sendBroadcastAsUser(intent, UserHandle.ALL);
++            }
+         }
+     };
+ 
+-- 
+2.39.2

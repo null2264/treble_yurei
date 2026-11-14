@@ -1,0 +1,37 @@
+From b5dc07d100b67074f4c50927404382fb8a9831ce Mon Sep 17 00:00:00 2001
+From: Yoel Gluschnaider <yoelg@meta.com>
+Date: Thu, 14 Sep 2023 16:12:11 +0000
+Subject: [PATCH] ignore virtual and overlay displays when turning displays off
+
+Test:
+1. Create a virtual display from your launcher app.
+2. Turn display off by pressing the power button.
+3. Run: `adb shell dumpsys power | grep -i mHalAutoSuspendModeEnabled`
+4. You should see mHalAutoSuspendModeEnabled=true
+Change-Id: I773ba8db10973bc3ea3442f5922ba5672a74fbad
+Signed-off-by: mukesh22584 <mks22584@gmail.com>
+---
+
+diff --git a/services/core/java/com/android/server/display/DisplayManagerService.java b/services/core/java/com/android/server/display/DisplayManagerService.java
+--- a/services/core/java/com/android/server/display/DisplayManagerService.java
++++ b/services/core/java/com/android/server/display/DisplayManagerService.java
+@@ -449,7 +449,16 @@ public synchronized void requestDisplayState(int displayId, int state, float bri
+                         for (int i = 0; i < size; i++) {
+                             final int displayState = i == index ? state : mDisplayStates.valueAt(i);
+                             if (displayState != Display.STATE_OFF) {
+-                                allOff = false;
++                                final LogicalDisplay display =
++                                        mLogicalDisplayMapper
++                                                .getDisplayLocked(mDisplayStates.keyAt(i));
++                                if (display.getDisplayInfoLocked() != null) {
++                                    int displayType = display.getDisplayInfoLocked().type;
++                                    if (displayType != Display.TYPE_VIRTUAL
++                                            && displayType != Display.TYPE_OVERLAY) {
++                                        allOff = false;
++                                    }
++                                }
+                             }
+                             if (Display.isActiveState(displayState)) {
+                                 allInactive = false;
+-- 
+2.39.2
