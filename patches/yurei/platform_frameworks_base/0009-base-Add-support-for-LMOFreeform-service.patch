@@ -11,19 +11,19 @@ Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
 diff --git a/Android.bp b/Android.bp
 --- a/Android.bp
 +++ b/Android.bp
-@@ -144,6 +144,7 @@ filegroup {
+@@ -141,6 +141,8 @@ filegroup {
+         ":vold_aidl",
          ":deviceproductinfoconstants_aidl",
  
-         ":adbrootservice_aidl",
 +        ":lmofreeform_aidl",
- 
++
          // For the generated R.java and Manifest.java
          ":framework-res{.aapt.srcjar}",
-
+ 
 diff --git a/core/java/android/hardware/display/DisplayManagerInternal.java b/core/java/android/hardware/display/DisplayManagerInternal.java
 --- a/core/java/android/hardware/display/DisplayManagerInternal.java
 +++ b/core/java/android/hardware/display/DisplayManagerInternal.java
-@@ -24,18 +24,22 @@
+@@ -24,17 +24,21 @@ import android.graphics.Point;
  import android.hardware.SensorManager;
  import android.hardware.input.HostUsiVersion;
  import android.os.Handler;
@@ -31,7 +31,6 @@ diff --git a/core/java/android/hardware/display/DisplayManagerInternal.java b/co
  import android.os.PowerManager;
  import android.util.IntArray;
  import android.util.SparseArray;
- import android.util.SparseIntArray;
  import android.view.Display;
  import android.view.DisplayInfo;
 +import android.view.Surface;
@@ -46,9 +45,9 @@ diff --git a/core/java/android/hardware/display/DisplayManagerInternal.java b/co
  import java.lang.annotation.Retention;
  import java.lang.annotation.RetentionPolicy;
  import java.util.List;
-@@ -523,6 +527,17 @@ public abstract RefreshRateRange getRefreshRateForDisplayAndSensor(
+@@ -528,6 +532,17 @@ public abstract class DisplayManagerInternal {
       */
-     public abstract int[] getDisplayIds(boolean includeDisabled);
+     public abstract boolean isDisplayReadyForMirroring(int displayId);
  
 +    // LMOFreeform
 +    public abstract void createFreeformLocked(String name, ILMOFreeformDisplayCallback callback,
@@ -62,9 +61,8 @@ diff --git a/core/java/android/hardware/display/DisplayManagerInternal.java b/co
 +    public abstract void releaseFreeform(IBinder appToken);
 +
      /**
-      * Get group id for given display id
-      */
-
+      * Called by {@link com.android.server.wm.WindowManagerService} to notify whether a display
+      * should be in the topology.
 diff --git a/services/core/Android.bp b/services/core/Android.bp
 --- a/services/core/Android.bp
 +++ b/services/core/Android.bp
@@ -80,7 +78,7 @@ diff --git a/services/core/Android.bp b/services/core/Android.bp
 diff --git a/services/core/java/com/android/server/display/DisplayManagerService.java b/services/core/java/com/android/server/display/DisplayManagerService.java
 --- a/services/core/java/com/android/server/display/DisplayManagerService.java
 +++ b/services/core/java/com/android/server/display/DisplayManagerService.java
-@@ -223,6 +223,8 @@
+@@ -208,6 +208,8 @@ import com.android.server.wm.DesktopModeHelper;
  import com.android.server.wm.SurfaceAnimationThread;
  import com.android.server.wm.WindowManagerInternal;
  
@@ -89,16 +87,16 @@ diff --git a/services/core/java/com/android/server/display/DisplayManagerService
  import java.io.FileDescriptor;
  import java.io.PrintWriter;
  import java.util.ArrayList;
-@@ -594,6 +596,8 @@ public class DisplayManagerService extends SystemService {
-     private boolean mIncludeDefaultDisplayInTopology = true;
-     private final boolean mStableEdidsFlag;
+@@ -563,6 +565,8 @@ public final class DisplayManagerService extends SystemService {
+     // only be used for the devices in projected mode.
+     private boolean mIncludeDefaultDisplayInTopology;
  
 +    private LMOFreeformDisplayAdapter mFreeformDisplayAdapter;
 +
      private final BroadcastReceiver mIdleModeReceiver = new BroadcastReceiver() {
          @Override
          public void onReceive(Context context, Intent intent) {
-@@ -2566,6 +2570,7 @@ private void registerAdditionalDisplayAdapters() {
+@@ -2386,6 +2390,7 @@ public final class DisplayManagerService extends SystemService {
              if (shouldRegisterNonEssentialDisplayAdaptersLocked()) {
                  registerOverlayDisplayAdapterLocked();
                  registerWifiDisplayAdapterLocked();
@@ -106,7 +104,7 @@ diff --git a/services/core/java/com/android/server/display/DisplayManagerService
              }
          }
      }
-@@ -2587,6 +2592,13 @@ private void registerWifiDisplayAdapterLocked() {
+@@ -2406,6 +2411,13 @@ public final class DisplayManagerService extends SystemService {
          }
      }
  
@@ -120,7 +118,7 @@ diff --git a/services/core/java/com/android/server/display/DisplayManagerService
      private boolean shouldRegisterNonEssentialDisplayAdaptersLocked() {
          // In safe mode, we disable non-essential display adapters to give the user
          // an opportunity to fix broken settings or other problems that might affect
-@@ -7148,6 +7160,23 @@ public void reloadTopologies(final int userId) {
+@@ -6430,6 +6442,23 @@ public final class DisplayManagerService extends SystemService {
                  scheduleTopologiesReload(mCurrentUserId, /*isUserSwitching=*/ false);
              }
          }
