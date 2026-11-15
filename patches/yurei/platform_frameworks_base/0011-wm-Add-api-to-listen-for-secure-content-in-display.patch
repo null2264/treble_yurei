@@ -56,7 +56,7 @@ diff --git a/services/core/java/com/android/server/wm/WindowManagerInternal.java
 index 4fdf64379f216..ce2ae630733b8 100644
 --- a/services/core/java/com/android/server/wm/WindowManagerInternal.java
 +++ b/services/core/java/com/android/server/wm/WindowManagerInternal.java
-@@ -432,6 +432,14 @@ default void dragRecipientEntered(IWindow window) {}
+@@ -439,6 +439,14 @@ public abstract class WindowManagerInternal {
          default void dragRecipientExited(IWindow window) {}
      }
  
@@ -71,10 +71,10 @@ index 4fdf64379f216..ce2ae630733b8 100644
      /**
       * Request the interface to access features implemented by AccessibilityController.
       */
-@@ -1394,4 +1402,12 @@ public abstract void setFocusedA11yEmbeddedConnectionReceiverOnDisplay(int displ
-      * @param ready True if the theme is ready, false otherwise.
+@@ -1251,4 +1259,12 @@ public abstract class WindowManagerInternal {
+      * @throws RuntimeException if the payload cannot be written to the settings file.
       */
-     public abstract void setThemeReady(boolean ready);
+     public abstract void restoreDisplayWindowSettings(int userId, byte[] payload);
 +
 +    /**
 +     * Register/unregister callbacks for secure content showing up on the display.
