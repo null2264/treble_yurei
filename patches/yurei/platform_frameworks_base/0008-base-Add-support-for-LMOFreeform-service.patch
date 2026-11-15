@@ -11,15 +11,14 @@ Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
 diff --git a/Android.bp b/Android.bp
 --- a/Android.bp
 +++ b/Android.bp
-@@ -141,6 +141,8 @@ filegroup {
+@@ -139,6 +139,7 @@ filegroup {
+         ":storaged_aidl",
          ":vold_aidl",
          ":deviceproductinfoconstants_aidl",
- 
 +        ":lmofreeform_aidl",
-+
+ 
          // For the generated R.java and Manifest.java
          ":framework-res{.aapt.srcjar}",
- 
 diff --git a/core/java/android/hardware/display/DisplayManagerInternal.java b/core/java/android/hardware/display/DisplayManagerInternal.java
 --- a/core/java/android/hardware/display/DisplayManagerInternal.java
 +++ b/core/java/android/hardware/display/DisplayManagerInternal.java
@@ -66,15 +65,16 @@ diff --git a/core/java/android/hardware/display/DisplayManagerInternal.java b/co
 diff --git a/services/core/Android.bp b/services/core/Android.bp
 --- a/services/core/Android.bp
 +++ b/services/core/Android.bp
-@@ -155,6 +155,7 @@ java_library_static {
-         ":device-state-config",
-         ":memory-limiter-config",
-         ":services-sources-telecom",
+@@ -156,6 +156,9 @@ java_library_static {
+ 
+         // Indicate whether VCN is in platform or mainline
+         ":vcn-location-sources",
++
++        // Freeform
 +        ":lmofreeform-display-adapter-java",
-         "java/com/android/server/EventLogTags.logtags",
-         "java/com/android/server/am/EventLogTags.logtags",
-         "java/com/android/server/wm/EventLogTags.logtags",
-
+     ],
+ 
+     libs: [
 diff --git a/services/core/java/com/android/server/display/DisplayManagerService.java b/services/core/java/com/android/server/display/DisplayManagerService.java
 --- a/services/core/java/com/android/server/display/DisplayManagerService.java
 +++ b/services/core/java/com/android/server/display/DisplayManagerService.java
