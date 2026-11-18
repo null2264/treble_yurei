@@ -262,6 +262,26 @@ jobs:
             echo "==> Extracting system image..."
             unzip -j -q "${OUT}"/signed-target_files.zip IMAGES/system.img -d ./
 
+        - name: "Display error.log (if build fails)"
+          if: ${{ steps.build.outcome == failure() }}
+          run: |
+            if [ -f "$GITHUB_WORKSPACE/adrodsrc/out/error.log" ]; then
+            echo "Displaying out/error.log"
+            echo "========================"
+            cat "$GITHUB_WORKSPACE/adrodsrc/out/error.log"
+            else
+            echo "Build had timed out. Skipping"
+            fi
+
+        - name: "Display remaining space (after build)"
+          if: ${{ always() }}
+          run: |
+            if [ -d "$GITHUB_WORKSPACE/adrodsrc" ]; then
+            df -h "$GITHUB_WORKSPACE/adrodsrc"
+            else
+            echo "Adrod source not found. Skipping"
+            fi
+
         - name: "Upload to GitHub Artifacts"
           uses: actions/upload-artifact@v7
           with:
