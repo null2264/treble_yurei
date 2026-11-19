@@ -49,7 +49,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git clone https://github.com/TrebleDroid/treble_app -b master --depth=1
+          git clone https://github.com/null2264/android_treble_app -b master --depth=1 treble_app
 
           for tier in trebledroid trebledroid-staging rom personal yurei; do
             $WD/patches/apply.sh . "${tier}" treble_app

@@ -23,7 +23,8 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     [ "$targetted_project" != "" ] && [ "$p" != "$targetted_project" ] && continue;
     [ "$excluded_project" != "" ] && [ "$p" == "$(sed -nE "s/!(.+)/\1/p" <<< "$excluded_project")" ] && continue;
 
-    pushd "$p"
+    curPWD="$PWD"
+    cd "$p"
     for patch in "$patches"/"$tree"/"$project"/*.patch; do
         echo ">> ${patch}"
         if test -d .git; then
@@ -32,5 +33,5 @@ for project in $(cd "$patches"/"$tree"; echo *); do
             patch -p1 --no-backup-if-mismatch < "$patch" || { [ "${IGNORE_BORKED_PATCHES:-false}" = "true" ] || exit 1; }
         fi
     done
-    popd
+    cd "$curPWD"
 done
