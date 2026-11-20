@@ -94,14 +94,87 @@ jobs:
 
         - name: "Set up zram"
           run: |
-            sudo modprobe zram
+            set -euo pipefail
+
+            sudo modprobe zram || true
+            sudo udevadm settle 2>/dev/null || true
+
+            # drop any pre-existing zram swap so the device can be reset and
+            # reconfigured to the exact layout AOSP building expects
+            existing=$(grep -oE '^/dev/zram[0-9]+' /proc/swaps 2>/dev/null || true)
+            for old in $existing; do
+              echo "zram: swapoff existing $old to reconfigure to spec"
+              sudo swapoff "$old" || echo "warning: swapoff $old failed (device busy)"
+            done
+
             totalmem=$(LC_ALL=C free | grep -e "^Mem:" | sed -e 's/^Mem: *//' -e 's/  *.*//')
             mem=$((totalmem * 4 * 1024))
-            sleep 5
-            sudo zramctl /dev/zram0 -s $mem -a lz4 || { sleep 5; sudo zramctl /dev/zram0 -s $mem -a lz4; }
-            sudo mkswap /dev/zram0
-            sudo swapon -p 100 /dev/zram0
-            sudo sysctl vm.swappiness=75
+
+            # pick the first zram device we can reset; EBUSY on reset means it is
+            # still held open (udev/swap), wait and retry before trying the next one
+            dev=""
+            sys=""
+            for cand in /sys/block/zram*; do
+              [ -e "$cand/reset" ] || continue
+              for i in 1 2 3 4 5; do
+                if printf '1\n' | sudo tee "$cand/reset" >/dev/null 2>&1; then
+                  sys="$cand"
+                  dev="/dev/$(basename "$cand")"
+                  break 2
+                fi
+                sleep 1
+              done
+            done
+
+            if [ -z "$sys" ]; then
+              echo "::error::zram: no usable zram device (module missing or all devices busy)"
+              ls -l /sys/block/zram* /dev/zram* 2>/dev/null || echo "no /sys/block/zram* or /dev/zram* entries"
+              exit 1
+            fi
+
+            # sysfs entry can exist before udev/devtmpfs created the node
+            # ("device not found"); recreate it from the kernel's major:minor
+            if [ ! -b "$dev" ]; then
+              echo "zram: $dev missing, recreating from $sys/dev"
+              majmin=$(cat "$sys/dev")
+              sudo mknod "$dev" b "${majmin%%:*}" "${majmin##*:}" || true
+            fi
+            if [ ! -b "$dev" ]; then
+              echo "::error::zram: $dev could not be created"
+              exit 1
+            fi
+
+            # configure + activate as one sequence, retrying on transient EBUSY:
+            # zram params only take while the device is fresh, and mkswap/swapon
+            # can race udev's blkid probe of the newly sized device
+            ok=""
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              sudo swapoff "$dev" 2>/dev/null || true
+              if printf '1\n' | sudo tee "$sys/reset" >/dev/null 2>&1; then
+                if grep -qw lz4 "$sys/comp_algorithm" 2>/dev/null; then
+                  printf 'lz4\n' | sudo tee "$sys/comp_algorithm" >/dev/null 2>&1 || true
+                fi
+                if printf '%s\n' "$mem" | sudo tee "$sys/disksize" >/dev/null 2>&1; then
+                  sudo udevadm settle 2>/dev/null || true
+                  if sudo mkswap "$dev" >/dev/null 2>&1 && sudo swapon -p 100 "$dev" 2>/dev/null; then
+                    ok=1
+                    break
+                  fi
+                fi
+              fi
+              sleep 2
+            done
+
+            if [ -z "$ok" ] || ! grep -q "^$dev " /proc/swaps; then
+              echo "::error::zram: failed to enable swap on $dev after retries"
+              zramctl 2>/dev/null || true
+              cat /proc/swaps || true
+              exit 1
+            fi
+
+            echo "zram swap active:"
+            cat /proc/swaps
+            sudo sysctl -w vm.swappiness=75
 
         - name: "Set up auth for googlesource.com"
           run: |
